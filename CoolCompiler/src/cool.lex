@@ -50,7 +50,7 @@ import java_cup.runtime.Symbol;
  *  work.  */
 
 %eofval{
-    switch(yy_lexical_state) {
+    switch(yystate()) {
     case YYINITIAL:
 	/* nothing special to do in the initial state */
 	break;
