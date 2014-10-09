@@ -1,0 +1,11 @@
+class else
+
+case esac new of not true
+false fi if in inherits isvoid
+let loop pool then while
+self
+x  S
+x  String  
+"else"
+=>  45
+"else 123 not"	
