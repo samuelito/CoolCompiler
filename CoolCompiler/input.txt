@@ -1,11 +1,16 @@
 class else
 
-case esac new of not true
-false fi if in inherits isvoid
-let loop pool then while
 self
-x  S
+x <- S  *)
+yut --Sam is the best
 x  String  
-"else"
+"else~`!@#$$%^&*(){}[]-_=+|\:;'?><.,"
 =>  45
-"else 123 not"	
+(* sdh  E asda j32 3kj 
+ fsdfsfa 
+ afafdsfsd 
+ fwfwefwefw  *)
+"else 123 not	
+ "sam is the"
+ *)
+ (* djkhsfhjashafhaskjdhas *)   

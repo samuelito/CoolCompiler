@@ -7,6 +7,7 @@ class CellularAutomaton inherits IO {
    
     init(map : String) : SELF_TYPE {
         {
+			"fsdkjhfhfj fsdhfjhdjfs g 
             population_map <- map;
             self;
         }
@@ -90,8 +91,10 @@ class Main {
                         countdown <- countdown - 1;
                     
                 pool
-            );  (* end let countdown
+            );  (* end let countdown 
             self;
         }
     };
 };
+
+"kda daskjh
