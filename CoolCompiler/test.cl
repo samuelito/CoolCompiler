@@ -7,7 +7,7 @@ class CellularAutomaton inherits IO {
    
     init(map : String) : SELF_TYPE {
         {
-			"fsdkjhfhfj fsdhfjhdjfs g 
+		
             population_map <- map;
             self;
         }
@@ -76,6 +76,10 @@ class CellularAutomaton inherits IO {
     };
 };
 
+(*TESTING QUOTE:*)
+
+" dasjkhda dasjhda asjdha
+
 class Main {
     cells : CellularAutomaton;
    
@@ -97,4 +101,3 @@ class Main {
     };
 };
 
-"kda daskjh

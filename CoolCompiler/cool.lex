@@ -144,12 +144,14 @@ import java_cup.runtime.Symbol;
 	TID = ({UPPERCHAR}{WORD}*|"SELF_TYPE")
 	OID = ({LOWERCHAR}{WORD}*|"self")
 	
-	/*STRING = ({LINEDEF}|({LINEONE}{LINETWO}*{LINETHREE}))
+	/* TESTING 
+	STRING = ({LINEDEF}|({LINEONE}{LINETWO}*{LINETHREE}))
 	LINEONE = ({QUOTE}([^\"\0\n])*[\\\n])
 	LINETWO = (([^\"\0\n])*([\\\n]|[\n]))
 	LINETHREE = (([^\"\0\n])*{QUOTE})
 	LINEDEF = ({QUOTE}([^\"\n\0])*{QUOTE})
 	*/
+	
 	STRING = ({QUOTE}([^\"\n\0])*({QUOTE}|[\\\n]))
 	DASHCMNT = "--"([^\n])*{NEWLINE}
 	BLOCKCMNT = "(*"([^*)])*({CTERM}|[^\n])
@@ -173,11 +175,10 @@ import java_cup.runtime.Symbol;
 
 <YYINITIAL>
 
-/*{STREOF}    {System.out.println("EOF "+yytext());}*/
 
-{STRING}	{ /*TEST*/
+{STRING}	{ /*TEST
 			System.out.println("TOKEN "+yytext());
-			System.out.println("LENGHT "+yytext().length());
+			System.out.println("LENGHT "+yytext().length());*/
 			
 			if(yytext().length() > MAX_STR_CONST){
 				   	String err_msg = new String("String is out of bound");
@@ -204,13 +205,8 @@ import java_cup.runtime.Symbol;
 			
 			}
 
-/*{STRERRA} { 		String err_msg = new String("String incomplete");
-					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-					Symbol ret = new Symbol(TokenConstants.ERROR);
-					ret.value = error;
-					return ret;}
-
-{STRERRB} { 		String err_msg = new String("String can't have EOF");
+/*
+{STRERR} { 		String err_msg = new String("String can't have EOF");
 					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 					Symbol ret = new Symbol(TokenConstants.ERROR);
 					ret.value = error;
