@@ -17,6 +17,7 @@ import java_cup.runtime.Symbol;
 
     // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
+   
 
     private int curr_lineno = 1;
     int get_curr_lineno() {
@@ -56,23 +57,10 @@ import java_cup.runtime.Symbol;
     case YYINITIAL:
 	/* nothing special to do in the initial state */
 	break;
-	/*case YYEOF:
-		if((yycharat(0) == '\"') && (yycharat(yytext().length()-1)!='\"')){
-			String err_msg = new String("String can't have EOF");
-			StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-			Symbol ret = new Symbol(TokenConstants.ERROR);
-			ret.value = error;
-			return ret;}
-		else if((yycharat(0) == '(') && (yycharat(1) == '*')
-					&& (yycharat(yytext().length()-1)!=')')
-					&& (yycharat(yytext().length()-2)!='*')){
-			String err_msg = new String("Comment can't have EOF");
-			StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-			Symbol ret = new Symbol(TokenConstants.ERROR);
-			ret.value = error;
-			return ret;}	
-	break;*/
 	
+	case STRING: 
+		System.out.println("IM HEREEEE!!!");
+	break;
 	/* If necessary, add code for other states here, e.g:
 	   case COMMENT:
 	   ...
@@ -108,16 +96,11 @@ import java_cup.runtime.Symbol;
 	RPAR = ")"
 	LB = "{"
 	RB = "}"
-	QUOTE = [\"]
+	/*QUOTE = [\"]*/
 	NEWLINE = [\n]
 	BLANKCHAR = (" "|\t|\r|\f|\v)
 	WHITESPACE = {BLANKCHAR}+
-	/*OPERATIONS = ({PLUS}|{MINUS}|{MULT}|{DIV}|{NEG}|{LESS}|{LEQ}|{EQ})
-	SYMBOLS = ({DARROW}|{ASSIGN}|{LPAR}|{RPAR}|{LB}|{RB})
-	OTHERS = ({PERIOD}|{SEMICOLON}|{COLON}|{COMMA}|{AT}|{QUOTE})
-	SPNO = ({OPERATIONS}|{OTHERS}|{SYMBOLS})*/
-	DIGIT = [0-9]
-	INT = {DIGIT}+	
+	
 	TRUE = ("t"[rR][uU][eE])
 	FALSE = ("f"[aA][lL][sS][eE])
 	CLASS = ([cC][lL][aA][sS][sS]) 
@@ -137,6 +120,9 @@ import java_cup.runtime.Symbol;
 	INH = ([iI][nN][hH][eE][rR][iI][tT][sS])
 	THEN = ([tT][hH][eE][nN])
 	WHILE = ([wW][hH][iI][lL][eE])
+	
+	DIGIT = [0-9]
+	INT = {DIGIT}+	
 	LOWERCHAR = [a-z]
 	UPPERCHAR = [A-Z]
 	CHAR = ({LOWERCHAR}|{UPPERCHAR})
@@ -144,17 +130,8 @@ import java_cup.runtime.Symbol;
 	TID = ({UPPERCHAR}{WORD}*|"SELF_TYPE")
 	OID = ({LOWERCHAR}{WORD}*|"self")
 	
-	/* TESTING 
-	STRING = ({LINEDEF}|({LINEONE}{LINETWO}*{LINETHREE}))
-	LINEONE = ({QUOTE}([^\"\0\n])*[\\\n])
-	LINETWO = (([^\"\0\n])*([\\\n]|[\n]))
-	LINETHREE = (([^\"\0\n])*{QUOTE})
-	LINEDEF = ({QUOTE}([^\"\n\0])*{QUOTE})
-	*/
-	
-	STRING = ({QUOTE}([^\"\n\0])*({QUOTE}|[\\\n]))
 	DASHCMNT = "--"([^\n])*{NEWLINE}
-	BLOCKCMNT = "(*"([^*)])*({CTERM}|[^\n])
+	BLOCKCMNT = "(*"([^*)])*({CTERM}|[.]*)
 	UNMATCH = {CTERM}
 	CTERM = "*)"
 	
@@ -170,12 +147,109 @@ import java_cup.runtime.Symbol;
      the result is c.
    - The complete Cool lexical specification is given in the
      Cool Reference Manual */
-
+     
+%x STRING INCOMPLETE
 %%
 
-<YYINITIAL>
+<YYINITIAL> 
+
+[\"] 		{
+				string_buf.setLength(0);
+				yybegin(STRING);
+		    }
+			
+<STRING>{
+
+[\"]		{	
+			
+			AbstractSymbol lex_val = AbstractTable.stringtable.addString(string_buf.toString());
+		  	Symbol ret = new Symbol(TokenConstants.STR_CONST);
+		   	ret.value = lex_val;
+		   	string_buf.setLength(0);
+		  	yybegin(YYINITIAL);
+		    return ret;
+		    }
+		    
+[\\\0] 	{
+				yybegin(INCOMPLETE);
+				String err_msg = new String("String contains null");
+				StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+				Symbol ret = new Symbol(TokenConstants.ERROR);
+				ret.value = error;
+				return ret;
+			}
+[\n]		{	
+				curr_lineno++;
+				yybegin(YYINITIAL);
+				String err_msg = new String("String Missing Quote");
+				StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+				Symbol ret = new Symbol(TokenConstants.ERROR);
+				ret.value = error;
+				return ret;
+				
+			}
+			
+[\\]n		{   string_buf.append('\n'); }
+[\\]b 		{	string_buf.append('\b'); }
+[\\]f 		{	string_buf.append('\f'); }
+[\\]t 		{	string_buf.append('\t'); }
+[\\].		{	string_buf.append(yycharat(yytext().length()-1)); }
+		
+/*[\\?\n]		{   string_buf.append(yytext());
+				curr_lineno++;
+				yybegin(STRING);
+			}*/
+						
+[^\\\n\0\"]* {	string_buf.append(yytext());}
+			
+	 
+<<EOF>>		{
+			    yybegin(YYINITIAL);
+			    String err_msg = new String("String contains EOF");
+				StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+				Symbol ret = new Symbol(TokenConstants.ERROR);
+				ret.value = error;
+				return ret;
+			}
+}
+			
+<INCOMPLETE>{
+	[\"] 		{yybegin(YYINITIAL);}
+	[\n] 		{
+					++curr_lineno;
+					yybegin(YYINITIAL);
+				}
+	[\\\n]		{ ++curr_lineno;}
+	[\\.]		{;}
+	[^\\\n\"]+ 	{;}	
+}
 
 
+{WHITESPACE} {;}
+
+{NEWLINE}	{
+			curr_lineno++;
+			}
+		
+/*{STRING}	{ 
+			System.out.println("TOKEN "+yytext());
+			System.out.println("LENGHT "+yytext().length());
+			
+			if(yytext().length() > MAX_STR_CONST){
+				   	String err_msg = new String("String is out of bound");
+					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+					Symbol ret = new Symbol(TokenConstants.ERROR);
+					ret.value = error;
+					return ret;}
+					
+			else {
+					AbstractSymbol lex_val = AbstractTable.stringtable.addString(yytext());
+		  			Symbol ret = new Symbol(TokenConstants.STR_CONST);
+		   			ret.value = lex_val;
+		    		return ret;}
+			}*/
+			
+/*
 {STRING}	{ /*TEST
 			System.out.println("TOKEN "+yytext());
 			System.out.println("LENGHT "+yytext().length());*/
@@ -186,12 +260,6 @@ import java_cup.runtime.Symbol;
 					Symbol ret = new Symbol(TokenConstants.ERROR);
 					ret.value = error;
 					return ret;}
-					
-			else if(yycharat(yytext().length()-1) == '\"'){
-				    AbstractSymbol lex_val = AbstractTable.stringtable.addString(yytext());
-				    Symbol ret = new Symbol(TokenConstants.STR_CONST);
-				    ret.value = lex_val;
-				    return ret;}
 				    
 			else if( yycharat(yytext().length()-1) == '\n' && yycharat(yytext().length()-2) != '\\' ) { /*EDIT*/
 						curr_lineno++;
@@ -199,36 +267,23 @@ import java_cup.runtime.Symbol;
 						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 						Symbol ret = new Symbol(TokenConstants.ERROR);
 						ret.value = error;
-						return ret;
+						return ret;}
 			}
-			
-			
-			}
-
-/*
-{STRERR} { 		String err_msg = new String("String can't have EOF");
-					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-					Symbol ret = new Symbol(TokenConstants.ERROR);
-					ret.value = error;
-					return ret;}*/
-{WHITESPACE} {;}
-
+*/
 
 {DASHCMNT} 		   {	System.out.println("LINE Comment: \n  " + yytext());
 						curr_lineno++; }
 {BLOCKCMNT}	       {	
 					if(((yycharat(yytext().length()-1)) != ')')&&((yycharat(yytext().length()-2)) != '*')){
-						String err_msg = new String("Comment can't end in EOF: " + yytext());
+						String err_msg = new String("EOF: No Comment Terminator " + yytext());
 						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 						Symbol ret = new Symbol(TokenConstants.ERROR);
 						ret.value = error;
 						return ret;}
 					else{
 						System.out.println("BLOCK Comment: \n  " + yytext());
-						curr_lineno++;  }
-					
-					} 
-
+						curr_lineno++; } 
+					}
 
 
 {UNMATCH}			{	
@@ -236,9 +291,9 @@ import java_cup.runtime.Symbol;
 						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 						Symbol ret = new Symbol(TokenConstants.ERROR);
 						ret.value = error;
-						return ret;
-					}
-{NEWLINE}				{	curr_lineno++; }
+						return ret;}
+				
+
 {INT}					{ 
 						  AbstractSymbol intvalue = AbstractTable.inttable.addString(yytext());
 						  Symbol ret = new Symbol(TokenConstants.INT_CONST);

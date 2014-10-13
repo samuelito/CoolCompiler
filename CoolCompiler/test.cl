@@ -1,3 +1,7 @@
+
+ "dasdasd ajsdasd \
+ 	dsjdad "
+
 (* models one-dimensional cellular automaton on a circle of finite radius
    arrays are faked as Strings,
    X's respresent live cells, dots represent dead cells,
@@ -93,11 +97,12 @@ class Main {
                         cells.evolve();
                         cells.print();
                         countdown <- countdown - 1;
-                    
+                  "dsjd dasad fdsfsd  
                 pool
-            );  (* end let countdown 
+            );  (* end let countdown *)
             self;
         }
     };
 };
 
+"sam dasdas  
