@@ -18,7 +18,7 @@ import java_cup.runtime.Symbol;
     // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
    
-
+	
     private int curr_lineno = 1;
     int get_curr_lineno() {
 	return curr_lineno;
@@ -58,9 +58,6 @@ import java_cup.runtime.Symbol;
 	/* nothing special to do in the initial state */
 	break;
 	
-	case STRING: 
-		System.out.println("IM HEREEEE!!!");
-	break;
 	/* If necessary, add code for other states here, e.g:
 	   case COMMENT:
 	   ...
@@ -131,10 +128,7 @@ import java_cup.runtime.Symbol;
 	OID = ({LOWERCHAR}{WORD}*|"self")
 	
 	DASHCMNT = "--"([^\n])*{NEWLINE}
-	BLOCKCMNT = "(*"([^*)])*({CTERM}|[.]*)
-	UNMATCH = {CTERM}
-	CTERM = "*)"
-	
+	UNMATCH = "*)"
 	
 	
 
@@ -148,7 +142,7 @@ import java_cup.runtime.Symbol;
    - The complete Cool lexical specification is given in the
      Cool Reference Manual */
      
-%x STRING INCOMPLETE
+%x STRING UNDETERMINED COMMENT
 %%
 
 <YYINITIAL> 
@@ -157,6 +151,12 @@ import java_cup.runtime.Symbol;
 				string_buf.setLength(0);
 				yybegin(STRING);
 		    }
+		    
+"(*"		{
+				System.out.println("#"+curr_lineno+ " Start Block Comment");
+				yybegin(COMMENT);
+			}
+			
 			
 <STRING>{
 
@@ -168,10 +168,9 @@ import java_cup.runtime.Symbol;
 		   	string_buf.setLength(0);
 		  	yybegin(YYINITIAL);
 		    return ret;
-		    }
+		    }	    
 		    
-[\\\0] 	{
-				yybegin(INCOMPLETE);
+[\\][\0] 	{	++curr_lineno;
 				String err_msg = new String("String contains null");
 				StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 				Symbol ret = new Symbol(TokenConstants.ERROR);
@@ -179,14 +178,13 @@ import java_cup.runtime.Symbol;
 				return ret;
 			}
 [\n]		{	
-				curr_lineno++;
+				
 				yybegin(YYINITIAL);
-				String err_msg = new String("String Missing Quote");
+				String err_msg = new String("String Missing Close Quote");
 				StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 				Symbol ret = new Symbol(TokenConstants.ERROR);
 				ret.value = error;
 				return ret;
-				
 			}
 			
 [\\]n		{   string_buf.append('\n'); }
@@ -195,13 +193,24 @@ import java_cup.runtime.Symbol;
 [\\]t 		{	string_buf.append('\t'); }
 [\\].		{	string_buf.append(yycharat(yytext().length()-1)); }
 		
-/*[\\?\n]		{   string_buf.append(yytext());
-				curr_lineno++;
+[\\][\n]	  { 	
+				string_buf.append('\n');		  
+				++curr_lineno;
 				yybegin(STRING);
-			}*/
+			}
 						
-[^\\\n\0\"]* {	string_buf.append(yytext());}
-			
+[^\\\n\0\"]* {	
+				if(yytext().length() > MAX_STR_CONST ){
+					yybegin(UNDETERMINED);
+					String err_msg = new String("String is out of bound");
+					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+					Symbol ret = new Symbol(TokenConstants.ERROR);
+					ret.value = error;
+					return ret;	
+					}
+				else{
+					string_buf.append(yytext());}
+			 }
 	 
 <<EOF>>		{
 			    yybegin(YYINITIAL);
@@ -213,105 +222,68 @@ import java_cup.runtime.Symbol;
 			}
 }
 			
-<INCOMPLETE>{
-	[\"] 		{yybegin(YYINITIAL);}
+<UNDETERMINED>{
+	[\"] 		{ yybegin(YYINITIAL);}
 	[\n] 		{
 					++curr_lineno;
 					yybegin(YYINITIAL);
 				}
-	[\\\n]		{ ++curr_lineno;}
-	[\\.]		{;}
-	[^\\\n\"]+ 	{;}	
+	[\\][\n]		{ ++curr_lineno;}
+	[\\].		{;}
+	[^\"\\\n]* 	{;}	
 }
 
+<COMMENT>{
+	 "*)" 	{	
+				yybegin(YYINITIAL);
+		   	}
+	"(*"    {;}
+	"("     {;}
+	"*"		{;}
+		   	  
+	[\n]   	{    ++curr_lineno;    }
+	
+	[^*)\n\0]*  {;}
+	
+	<<EOF>>	{
+			    yybegin(YYINITIAL);
+			    String err_msg = new String("Comment contains EOF");
+				StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+				Symbol ret = new Symbol(TokenConstants.ERROR);
+				ret.value = error;
+				return ret;
+			}
+}
 
 {WHITESPACE} {;}
 
-{NEWLINE}	{
-			curr_lineno++;
-			}
-		
-/*{STRING}	{ 
-			System.out.println("TOKEN "+yytext());
-			System.out.println("LENGHT "+yytext().length());
-			
-			if(yytext().length() > MAX_STR_CONST){
-				   	String err_msg = new String("String is out of bound");
-					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-					Symbol ret = new Symbol(TokenConstants.ERROR);
-					ret.value = error;
-					return ret;}
-					
-			else {
-					AbstractSymbol lex_val = AbstractTable.stringtable.addString(yytext());
-		  			Symbol ret = new Symbol(TokenConstants.STR_CONST);
-		   			ret.value = lex_val;
-		    		return ret;}
-			}*/
-			
-/*
-{STRING}	{ /*TEST
-			System.out.println("TOKEN "+yytext());
-			System.out.println("LENGHT "+yytext().length());*/
-			
-			if(yytext().length() > MAX_STR_CONST){
-				   	String err_msg = new String("String is out of bound");
-					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-					Symbol ret = new Symbol(TokenConstants.ERROR);
-					ret.value = error;
-					return ret;}
-				    
-			else if( yycharat(yytext().length()-1) == '\n' && yycharat(yytext().length()-2) != '\\' ) { /*EDIT*/
-						curr_lineno++;
-						String err_msg = new String("String Missing Final Quote");
-						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-						Symbol ret = new Symbol(TokenConstants.ERROR);
-						ret.value = error;
-						return ret;}
-			}
-*/
+{NEWLINE}	{curr_lineno++;}
 
-{DASHCMNT} 		   {	System.out.println("LINE Comment: \n  " + yytext());
+{DASHCMNT} 		   {	System.out.println("#"+curr_lineno+ " " + yytext());
 						curr_lineno++; }
-{BLOCKCMNT}	       {	
-					if(((yycharat(yytext().length()-1)) != ')')&&((yycharat(yytext().length()-2)) != '*')){
-						String err_msg = new String("EOF: No Comment Terminator " + yytext());
-						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-						Symbol ret = new Symbol(TokenConstants.ERROR);
-						ret.value = error;
-						return ret;}
-					else{
-						System.out.println("BLOCK Comment: \n  " + yytext());
-						curr_lineno++; } 
-					}
 
-
-{UNMATCH}			{	
+{UNMATCH}	{
 						String err_msg = new String("Unmatched Comment Terminator: *) ");
 						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 						Symbol ret = new Symbol(TokenConstants.ERROR);
 						ret.value = error;
 						return ret;}
 				
-
-{INT}					{ 
-						  AbstractSymbol intvalue = AbstractTable.inttable.addString(yytext());
-						  Symbol ret = new Symbol(TokenConstants.INT_CONST);
-						  ret.value = intvalue;
-						  return ret;
-						}
-{TRUE } 				{
-						  AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
-						  Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
-						  ret.value = boolvalue;
-						  return ret;
-						 }
-{FALSE}					{
-						  AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
-						  Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
-						  ret.value = boolvalue;
-						  return ret;
-						 }
+{INT}	{  AbstractSymbol intvalue = AbstractTable.inttable.addString(yytext());
+		   Symbol ret = new Symbol(TokenConstants.INT_CONST);
+		   ret.value = intvalue;
+		   return ret;}
+						  
+		   
+{TRUE } { AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
+		  Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
+		  ret.value = boolvalue;
+		  return ret;}
+		  
+{FALSE}	{ AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
+		  Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
+		  ret.value = boolvalue;
+		  return ret;}
 					
 {CLASS}					{
 						  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
@@ -410,18 +382,16 @@ import java_cup.runtime.Symbol;
 						  Symbol ret = new Symbol(TokenConstants.WHILE);
 						  ret.value = lex_val;
 						  return ret;}
-						 
-
-			
+						  
 {TID} 	{  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
-						  Symbol ret = new Symbol(TokenConstants.TYPEID);
-						  ret.value = lex_val;
-						  return ret;}
+		   Symbol ret = new Symbol(TokenConstants.TYPEID);
+		   ret.value = lex_val;
+		   return ret;}
 						  
 {OID} 	{  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
-						  Symbol ret = new Symbol(TokenConstants.OBJECTID);
-						  ret.value = lex_val;
-						  return ret;}
+		   Symbol ret = new Symbol(TokenConstants.OBJECTID);
+		   ret.value = lex_val;
+		   return ret;}
 						  
 {DARROW}		{ return new Symbol(TokenConstants.DARROW);}
 {EQ} 		    { return new Symbol(TokenConstants.EQ);}					  
@@ -448,6 +418,6 @@ import java_cup.runtime.Symbol;
                      in your lexical specification and
                      will match match everything not
                      matched by other lexical rules. */
-                     System.err.println(curr_lineno+ " LEXER BUG - UNMATCHED: " + yytext()); 
+                     System.out.println("#"+ curr_lineno+ " ERROR LEXER BUG - UNMATCHED: " + yytext()); 
                 	
                 }

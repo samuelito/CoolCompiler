@@ -1,12 +1,8 @@
-
- "dasdasd ajsdasd \
- 	dsjdad "
-
 (* models one-dimensional cellular automaton on a circle of finite radius
-   arrays are faked as Strings,
-   X's respresent live cells, dots represent dead cells,
-   no error checking is done *)
-class CellularAutomaton inherits IO {
+	arrays are faked as Strings, X's respresent live cells, 
+	dots represent dead cells,
+    no error checking is done *)
+ class CellularAutomaton inherits IO {
     population_map : String;
    
     init(map : String) : SELF_TYPE {
@@ -80,10 +76,6 @@ class CellularAutomaton inherits IO {
     };
 };
 
-(*TESTING QUOTE:*)
-
-" dasjkhda dasjhda asjdha
-
 class Main {
     cells : CellularAutomaton;
    
@@ -97,12 +89,39 @@ class Main {
                         cells.evolve();
                         cells.print();
                         countdown <- countdown - 1;
-                  "dsjd dasad fdsfsd  
                 pool
-            );  (* end let countdown *)
-            self;
-        }
+            );  (* end let countdown  *)
+            self; 
+        }     
     };
 };
 
-"sam dasdas  
+'
+'
+>
+[ 
+]
+$
+%
+^
+#
+
+--COMMENT TEST
+
+--Line Comments 
+
+(*Regular \
+	block
+	 coment *)
+*)
+
+--STRING TEST
+
+"Regular String"
+
+"String without Quote
+
+"String with \
+ escape newline "
+ 
+ "String ends with end of file
