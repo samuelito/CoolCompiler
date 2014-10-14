@@ -106,19 +106,23 @@ $
 ^
 #
 
---COMMENT TEST
-
 --Line Comments 
+
+*)
 
 (*Regular \
 	block
-	 coment *)
-*)
+	 comment *)
 
---STRING TEST
+"Regular String "
 
-"Regular String"
+"This string contains more than 35 characters"
 
+"This string contains more than 35 characters
+
+"This string contains more than 35 characters \
+      end"
+      
 "String without Quote
 
 "String with \

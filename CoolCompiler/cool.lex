@@ -13,7 +13,7 @@ import java_cup.runtime.Symbol;
 
 %{
     // Max size of string constants
-    static int MAX_STR_CONST = 1025;
+    static int MAX_STR_CONST = 035;
 
     // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
@@ -93,7 +93,7 @@ import java_cup.runtime.Symbol;
 	RPAR = ")"
 	LB = "{"
 	RB = "}"
-	/*QUOTE = [\"]*/
+	
 	NEWLINE = [\n]
 	BLANKCHAR = (" "|\t|\r|\f|\v)
 	WHITESPACE = {BLANKCHAR}+
@@ -123,14 +123,12 @@ import java_cup.runtime.Symbol;
 	LOWERCHAR = [a-z]
 	UPPERCHAR = [A-Z]
 	CHAR = ({LOWERCHAR}|{UPPERCHAR})
-	WORD = ({CHAR}|{DIGIT}|"_")
-	TID = ({UPPERCHAR}{WORD}*|"SELF_TYPE")
-	OID = ({LOWERCHAR}{WORD}*|"self")
+	ID = ({CHAR}|{DIGIT}|"_")
+	TID = ({UPPERCHAR}{ID}*|"SELF_TYPE")
+	OID = ({LOWERCHAR}{ID}*|"self")
 	
-	DASHCMNT = "--"([^\n])*{NEWLINE}
+	LINECMNT = "--"([^\n])*{NEWLINE}
 	UNMATCH = "*)"
-	
-	
 
 /* Define lexical rules after the %% separator.  Don't forget that:
    - Comments should be properly nested
@@ -142,7 +140,7 @@ import java_cup.runtime.Symbol;
    - The complete Cool lexical specification is given in the
      Cool Reference Manual */
      
-%x STRING UNDETERMINED COMMENT
+%x STRING CONTINUE COMMENT
 %%
 
 <YYINITIAL> 
@@ -187,6 +185,7 @@ import java_cup.runtime.Symbol;
 				return ret;
 			}
 			
+			
 [\\]n		{   string_buf.append('\n'); }
 [\\]b 		{	string_buf.append('\b'); }
 [\\]f 		{	string_buf.append('\f'); }
@@ -201,7 +200,7 @@ import java_cup.runtime.Symbol;
 						
 [^\\\n\0\"]* {	
 				if(yytext().length() > MAX_STR_CONST ){
-					yybegin(UNDETERMINED);
+					yybegin(CONTINUE);
 					String err_msg = new String("String is out of bound");
 					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
 					Symbol ret = new Symbol(TokenConstants.ERROR);
@@ -222,13 +221,13 @@ import java_cup.runtime.Symbol;
 			}
 }
 			
-<UNDETERMINED>{
+<CONTINUE>{
 	[\"] 		{ yybegin(YYINITIAL);}
+	[\\][\n]	{ ++curr_lineno;}
 	[\n] 		{
 					++curr_lineno;
 					yybegin(YYINITIAL);
 				}
-	[\\][\n]		{ ++curr_lineno;}
 	[\\].		{;}
 	[^\"\\\n]* 	{;}	
 }
@@ -259,7 +258,7 @@ import java_cup.runtime.Symbol;
 
 {NEWLINE}	{curr_lineno++;}
 
-{DASHCMNT} 		   {	System.out.println("#"+curr_lineno+ " " + yytext());
+{LINECMNT} 		   {	System.out.println("#"+curr_lineno+ " " + yytext());
 						curr_lineno++; }
 
 {UNMATCH}	{
