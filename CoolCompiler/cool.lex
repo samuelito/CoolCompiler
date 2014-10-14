@@ -13,7 +13,7 @@ import java_cup.runtime.Symbol;
 
 %{
     // Max size of string constants
-    static int MAX_STR_CONST = 035;
+    static int MAX_STR_CONST = 1025;
 
     // For assembling string constants
     StringBuffer string_buf = new StringBuffer();
@@ -184,8 +184,7 @@ import java_cup.runtime.Symbol;
 				ret.value = error;
 				return ret;
 			}
-			
-			
+				
 [\\]n		{   string_buf.append('\n'); }
 [\\]b 		{	string_buf.append('\b'); }
 [\\]f 		{	string_buf.append('\f'); }

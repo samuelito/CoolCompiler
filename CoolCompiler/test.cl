@@ -117,11 +117,6 @@ $
 "Regular String "
 
 "This string contains more than 35 characters"
-
-"This string contains more than 35 characters
-
-"This string contains more than 35 characters \
-      end"
       
 "String without Quote
 
