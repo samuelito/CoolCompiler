@@ -70,7 +70,20 @@ nonterminal Classes class_list;
 nonterminal class_ class;
 nonterminal Features dummy_feature_list;
 
+/*COMPLETE*/
+nonterminal Feature feature;
+nonterminal Expression expr;
+
 /* Precedence declarations go here. */
+precedence right ASSIGN;
+precedence left NOT;
+precedence nonassoc LE, LT, EQ;
+precedence left PLUS, MINUS;
+precedence left MULT, DIV;
+precedence left ISVOID;
+precedence left NEG;
+precedence left AT;
+precedence left DOT;
 
 program	
 	::= class_list:cl
@@ -100,5 +113,122 @@ class
 dummy_feature_list
 	::= /* empty */
 	    {: RESULT = new Features(curr_lineno()); :}
-/* add more stuff here. */
+/* add more stuff here. */ 
+   
+	| dummy_feature_list:fl feature:f
+		{: RESULT = fl.appendElement(f); :}
+
 	;
+
+feature
+	::= OBJECTID:oi LPAREN formals:f RPAREN COLON TYPEID:ti LBRACE expr:e RBRACE SEMI
+		{: RESULT = new method(curr_lineno(), oi, f, ti, e); :}
+	
+	;
+	
+	
+formal 
+	::= OBJECTID:oi COLON TYPEID:ti 
+		{: RESULT =  new formalc(curr_lineno(), oi, ti); :}
+	;
+
+expr 
+	::= OBJECTID:oi ASSIGN expr:e
+		{: RESULT = new assign(curr_lineno(), oi, e); :}
+		
+	| expr:e1 LBRACE AT TYPEID:ti RBRACE DOT OBJECTID:oi LPAR expr:e2 RPAR
+		{: RESULT = new assign(curr_lineno(), oi, e); :}
+		
+	/*HARD ONES*/
+	/*LET*/
+	
+	| NEW TYPEID:ti
+		{: RESULT = new new_(curr_lineno(), ti); :}
+	| ISVOID expr:e
+		{: RESULT = new isvoid(curr_lineno(), e); :}
+	| expr:e1 PLUS expr:e2
+		{: RESULT = new plus(curr_lineno(), e1, e2); :}
+	| expr:e1 MINUS expr:e2
+		{: RESULT = new sub(curr_lineno(), e1, e2); :}
+	| expr:e1 MULT expr:e2
+		{: RESULT = new mul(curr_lineno(), e1, e2); :}
+	| expr:e1 DIV expr:e2
+		{: RESULT = new divide(curr_lineno(), e1, e2); :}
+	| NEG expr:e
+		{: RESULT = new neg(curr_lineno(), e); :}
+	| expr:e1 LT expr:e2
+		{: RESULT = new lt(curr_lineno(), e1, e2); :}
+	| expr:e1 LE expr:e2
+		{: RESULT = new leq(curr_lineno(), e1, e2); :}
+	| expr:e1 PLUS expr:e2
+	| expr:e1 EQ expr:e2
+		{: RESULT = new eq(curr_lineno(), e1, e2); :}
+	| NOT expr:e
+		{: RESULT = new comp(curr_lineno(), e); :}
+	| LPAREN expr:e RPAREN
+		/*INCOMPLETE*/
+	| OBJECTID:oi
+		{: RESULT = new object(curr_lineno(), oi); :}
+	| INT_CONST:i
+		{: RESULT = new int_const(curr_lineno(), s); :}
+	| STR_CONST:s
+		{: RESULT = new string_const(curr_lineno(), s); :}
+	| BOOL_CONST:b
+		{: RESULT = new bool_const(curr_lineno(), b); :}
+	;
+	
+/*UN_USED COOLTREE CLASSES - KEEP TRACK*/
+/* 
+Extends Expression
+	no_expr  (int linenum) 
+	let(int linenum, AS a1-ident, AS a2-typedec, Exp a3-init, Exp a4-body)
+	block (int linenum, exp a1 - body)
+	typecase (int line, exp a1-exp, Cases a2 - cases)
+	loop (int line, Exp a1 - pred, Exp a2 - body)
+	cond (int line, Exp a1 - pred, Exp a2 -then_exp, Exp a3 - else_exp)
+	dispatch(int line, Exp a1-exp, AS a2 -name, Exp a3-actual)
+	static_dispatch(int, Exp a1-exp, AS a2-type_name, AS a3- name, Exp a4 -actual)
+	assign(int ,AS a1-name, Exp a2-expr)
+Extends case
+	branch(int, AS a1-name, AS a2-type_decl, Exp a3-exp)
+Extends FormalAbstract
+	formal(int, AS a1-name, AS a2-type_decl)
+Extends Feature
+	attr(int, AS a1-name,AS a2-type_decl, Ex a3-init )
+	method(int, AS a1-name, Formals a2-formals, AS a3-return_type, Exp a4 - expr)
+Extends ClassAbstract
+	class_(int, AS a1-name, AS a2-parent,Features a3-features, AS a4-filename)
+Extends ProgramAbstract
+	program(int, Classes a1 - classes)
+Extends TreeNode
+	Case(int linenum)
+	Expression(int)
+	FormalAbstract(int)
+	FEatures(int)
+	ClassAbstract(int)
+	ProgramAbstract(int)
+	
+Extends ListNode
+	Cases(int, Vector elements)
+	Cases(int) - empty
+	Cases appendElement(TreeNode elem) -case elem to list
+	
+	Expressions(int, Vector elements)
+	Expressions(int) - empty
+	Expressions appendElement(TreeNode elem) -Exp to list
+
+	Formals(int,vector)
+	Formals(int)
+	Formals append
+
+	Features(int, vector)
+	Features(int)
+	Features append
+	
+	Classes(int, vector)
+	Classes(int)
+	Classes append
+	
+	
+*/
+	
