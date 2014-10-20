@@ -70,9 +70,15 @@ nonterminal Classes class_list;
 nonterminal class_ class;
 nonterminal Features dummy_feature_list;
 
-/*COMPLETE*/
+/* ADDED */
 nonterminal Feature feature;
 nonterminal Expression expr;
+nonterminal Expressions expressions;
+nonterminal FormalAbstract formal;
+nonterminal Formals formals;
+nonterminal Cases cases;
+nonterminal branch case;
+nonterminal let letstatement;
 
 /* Precedence declarations go here. */
 precedence right ASSIGN;
@@ -113,35 +119,116 @@ class
 dummy_feature_list
 	::= /* empty */
 	    {: RESULT = new Features(curr_lineno()); :}
+	    
 /* add more stuff here. */ 
-   
 	| dummy_feature_list:fl feature:f
 		{: RESULT = fl.appendElement(f); :}
-
 	;
+	
+/* feature rules:
+	ID ( formals,* ) : TYPE { expr } 
+	ID : TYPE [<- expr]
+*/
 
 feature
 	::= OBJECTID:oi LPAREN formals:f RPAREN COLON TYPEID:ti LBRACE expr:e RBRACE SEMI
 		{: RESULT = new method(curr_lineno(), oi, f, ti, e); :}
 	
+	| OBJECTID:oi COLON TYPEID:ti ASSIGN expr:e SEMI
+		{: RESULT = new attr(curr_lineno(), oi, ti, e); :}
+
+	| OBJECTID:oi COLON TYPEID:ti SEMI
+		{: RESULT = new attr(curr_lineno(), oi, ti, new no_expr(curr_lineno())); :}
 	;
 	
-	
+/*  FORMAL RULE
+	ID : TYPE   */
+
 formal 
 	::= OBJECTID:oi COLON TYPEID:ti 
-		{: RESULT =  new formalc(curr_lineno(), oi, ti); :}
+		{: RESULT =  new formal(curr_lineno(), oi, ti); :}
 	;
 
+/*   Formals in -> feature : 
+		ID( formals,*) : TYPE { expr }   */
+
+formals
+	::= /* empty */
+	    {: RESULT = new Formals(curr_lineno()); :}
+	    
+	| formal:f
+		{: RESULT = (new Formals(curr_lineno())).appendElement(f); :}
+	
+	| formals:fl COMMA formal:f
+		{: RESULT = fl.appendElement(f); :}
+	;
+
+/*	RULE FOR ONE CASE - returns new branch()
+		[[ ID : TYPE => expr ; ]]+     */
+
+case	
+	::= OBJECTID:oi COLON TYPEID:ti DARROW expr:e SEMI
+		{: RESULT = new branch(curr_lineno(), oi, ti, e); :}
+	;
+	
+/*LIST OF CASES*/
+
+cases
+	::= case:c
+		{: RESULT = (new Cases(curr_lineno())).appendElement(c); :}
+	| cases:cl case:c
+		{: RESULT = cl.appendElement(c); :}
+	;
+
+/* LET Statement: 
+		LET [[ ID : TYPE [ <- expr] ]],+ IN expr      */
+
+letstatement
+	::= OBJECTID:oi COLON TYPEID:ti IN expr:e
+		{: RESULT = new let(curr_lineno(), oi, ti, new no_expr(curr_lineno()), e); :}
+		
+	| OBJECTID:oi COLON TYPEID:ti ASSIGN expr:e1 IN expr:e2
+		{: RESULT = new let(curr_lineno(), oi, ti, e1, e2); :}
+		
+	| OBJECTID:oi COLON TYPEID:ti COMMA letstatement:ls
+		{: RESULT = new let(curr_lineno(), oi, ti, new no_expr(curr_lineno()), ls); :}
+
+	| OBJECTID:oi COLON TYPEID:ti ASSIGN expr:e COMMA letstatement:ls
+		{: RESULT = new let(curr_lineno(), oi, ti, e, ls); :}
+	;
+
+/* 	Rule: { expr;+ }  -> new block()   */ 
+
+expressions
+		::= expr:e SEMI
+			{: RESULT = (new Expressions(curr_lineno())).appendElement(e); :} 
+		| expressions:el expr:e
+			{: RESULT = el.appendElement(e); :}
+		;
+		
+/* Rules for Expression */
+	
 expr 
 	::= OBJECTID:oi ASSIGN expr:e
 		{: RESULT = new assign(curr_lineno(), oi, e); :}
 		
-	| expr:e1 LBRACE AT TYPEID:ti RBRACE DOT OBJECTID:oi LPAR expr:e2 RPAR
-		{: RESULT = new assign(curr_lineno(), oi, e); :}
-		
-	/*HARD ONES*/
-	/*LET*/
+	/*	
+	dispatch(int line, Exp a1-exp, AS a2 -name, Exp a3-actual)
+	static_dispatch(int, Exp a1-exp, AS a2-type_name, AS a3- name, Exp a4 -actual)
+	*/	
+	/*TO IMPLEMENT: dispatch*/
+	/*rules 2 and 3*/
 	
+	| IF expr:e1 THEN expr:e2 ELSE expr:e3 FI
+		{: RESULT = new cond(curr_lineno(), e1, e2, e3); :}
+	| WHILE expr:e1 LOOP expr:e2 POOL
+		{: RESULT = new loop(curr_lineno(), e1, e2); :}
+	| LBRACE expressions:el RBRACE
+		{: RESULT = new block(curr_lineno(), el); :}	
+	| LET letstatement:ls											
+		{: RESULT = ls; :}			
+	| CASE expr:e OF cases:cl ESAC
+		{: RESULT = new typcase(curr_lineno(), e, cl); :}
 	| NEW TYPEID:ti
 		{: RESULT = new new_(curr_lineno(), ti); :}
 	| ISVOID expr:e
@@ -160,75 +247,20 @@ expr
 		{: RESULT = new lt(curr_lineno(), e1, e2); :}
 	| expr:e1 LE expr:e2
 		{: RESULT = new leq(curr_lineno(), e1, e2); :}
-	| expr:e1 PLUS expr:e2
 	| expr:e1 EQ expr:e2
 		{: RESULT = new eq(curr_lineno(), e1, e2); :}
 	| NOT expr:e
 		{: RESULT = new comp(curr_lineno(), e); :}
 	| LPAREN expr:e RPAREN
-		/*INCOMPLETE*/
+		{: RESULT = e; :}
 	| OBJECTID:oi
 		{: RESULT = new object(curr_lineno(), oi); :}
 	| INT_CONST:i
-		{: RESULT = new int_const(curr_lineno(), s); :}
+		{: RESULT = new int_const(curr_lineno(), i); :}
 	| STR_CONST:s
 		{: RESULT = new string_const(curr_lineno(), s); :}
 	| BOOL_CONST:b
 		{: RESULT = new bool_const(curr_lineno(), b); :}
 	;
 	
-/*UN_USED COOLTREE CLASSES - KEEP TRACK*/
-/* 
-Extends Expression
-	no_expr  (int linenum) 
-	let(int linenum, AS a1-ident, AS a2-typedec, Exp a3-init, Exp a4-body)
-	block (int linenum, exp a1 - body)
-	typecase (int line, exp a1-exp, Cases a2 - cases)
-	loop (int line, Exp a1 - pred, Exp a2 - body)
-	cond (int line, Exp a1 - pred, Exp a2 -then_exp, Exp a3 - else_exp)
-	dispatch(int line, Exp a1-exp, AS a2 -name, Exp a3-actual)
-	static_dispatch(int, Exp a1-exp, AS a2-type_name, AS a3- name, Exp a4 -actual)
-	assign(int ,AS a1-name, Exp a2-expr)
-Extends case
-	branch(int, AS a1-name, AS a2-type_decl, Exp a3-exp)
-Extends FormalAbstract
-	formal(int, AS a1-name, AS a2-type_decl)
-Extends Feature
-	attr(int, AS a1-name,AS a2-type_decl, Ex a3-init )
-	method(int, AS a1-name, Formals a2-formals, AS a3-return_type, Exp a4 - expr)
-Extends ClassAbstract
-	class_(int, AS a1-name, AS a2-parent,Features a3-features, AS a4-filename)
-Extends ProgramAbstract
-	program(int, Classes a1 - classes)
-Extends TreeNode
-	Case(int linenum)
-	Expression(int)
-	FormalAbstract(int)
-	FEatures(int)
-	ClassAbstract(int)
-	ProgramAbstract(int)
-	
-Extends ListNode
-	Cases(int, Vector elements)
-	Cases(int) - empty
-	Cases appendElement(TreeNode elem) -case elem to list
-	
-	Expressions(int, Vector elements)
-	Expressions(int) - empty
-	Expressions appendElement(TreeNode elem) -Exp to list
-
-	Formals(int,vector)
-	Formals(int)
-	Formals append
-
-	Features(int, vector)
-	Features(int)
-	Features append
-	
-	Classes(int, vector)
-	Classes(int)
-	Classes append
-	
-	
-*/
 	
