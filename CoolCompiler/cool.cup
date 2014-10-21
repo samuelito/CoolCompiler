@@ -4,7 +4,6 @@
  *
  */
  
-
 import java_cup.runtime.*;
 
 /* Stuff enclosed in {: :} is copied verbatim to the class containing
