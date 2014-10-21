@@ -19,8 +19,10 @@ ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+
 import java_cup.runtime.Symbol;
 
 /** The parser driver class */
@@ -30,7 +32,11 @@ class Parser {
     public static void main(String[] args) {
 	args = Flags.handleFlags(args);
 	try {
-	    CoolTokenLexer lexer = new CoolTokenLexer(new InputStreamReader(System.in));
+		
+		FileReader file =new FileReader(args[0]);    
+		//CoolLexer lexer = new CoolLexer(new InputStreamReader(System.in));
+	    CoolLexer lexer = new CoolLexer(file);
+	    lexer.set_filename(args[0]);
 	    CoolCup parser = new CoolCup(lexer);
 	    Symbol result = (Flags.parser_debug 
 			     ? parser.debug_parse()
@@ -39,7 +45,7 @@ class Parser {
 		System.err.println("Compilation halted due to lex and parse errors");
 		System.exit(1);
 	    }
-	    ((ProgramAbstract)result.value).dump_with_types(System.out, 0);
+	    ((ProgramAbstract) result.value).dump_with_types(System.out, 0);
 	} catch (Exception ex) {
 	    ex.printStackTrace(System.err);
 	    Utilities.fatalError("Unexpected exception in parser");

@@ -4,7 +4,6 @@
 
 import java_cup.runtime.Symbol;
 
-
 %%
 
 /*  Stuff enclosed in %{ %} is copied verbatim to the lexer class

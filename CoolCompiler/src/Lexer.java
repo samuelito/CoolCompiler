@@ -35,7 +35,7 @@ class Lexer {
 	    FileReader file = null;
 	    try {
 		file = new FileReader(args[i]);
-		
+
 		System.out.println("#name \"" + args[i] + "\"");
 		CoolLexer lexer = new CoolLexer(file);
 		lexer.set_filename(args[i]);

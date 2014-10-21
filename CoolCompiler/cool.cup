@@ -16,11 +16,11 @@ that was there initially.  */
 action code {: 
 
     int curr_lineno() {
-	return ((CoolTokenLexer)parser.getScanner()).curr_lineno();
+	return ((CoolLexer)parser.getScanner()).get_curr_lineno();
     }
 
     AbstractSymbol curr_filename() {
-	return ((CoolTokenLexer)parser.getScanner()).curr_filename();
+	return ((CoolLexer)parser.getScanner()).curr_filename();
     }
 :} 
 
@@ -66,15 +66,17 @@ terminal AbstractSymbol TYPEID, OBJECTID;
    /* Complete the nonterminal list below, giving a type for the semantic
       value of each non terminal. (See the CUP documentation for details. */
 
-nonterminal program program;
+nonterminal ProgramAbstract program;
 nonterminal Classes class_list;
-nonterminal class_ class;
+nonterminal ClassAbstract class;
 nonterminal Features dummy_feature_list;
 
 /* ADDED */
 nonterminal Feature feature;
 nonterminal Expression expr;
 nonterminal Expressions expressions;
+nonterminal Expressions e_list;
+nonterminal Expressions e_args;
 nonterminal FormalAbstract formal;
 nonterminal Formals formals;
 nonterminal Cases cases;
@@ -82,6 +84,7 @@ nonterminal branch case;
 nonterminal let letstatement;
 
 /* Precedence declarations go here. */
+precedence left LPAREN;
 precedence right ASSIGN;
 precedence left NOT;
 precedence nonassoc LE, LT, EQ;
@@ -197,6 +200,21 @@ letstatement
 	| OBJECTID:oi COLON TYPEID:ti ASSIGN expr:e COMMA letstatement:ls
 		{: RESULT = new let(curr_lineno(), oi, ti, e, ls); :}
 	;
+	
+/* Rule : ( expr, ) */
+e_list
+	::= e_args:ea
+		{: RESULT = ea; :}
+	;
+		
+e_args
+	::=
+		{: RESULT = new Expressions(curr_lineno()); :}	
+	| expr:e
+		{: RESULT = (new Expressions(curr_lineno())).appendElement(e); :}
+	| e_args:ea COMMA expr:e
+		{: RESULT = ea.appendElement(e); :}
+	;
 
 /* 	Rule: { expr;+ }  -> new block()   */ 
 
@@ -212,13 +230,15 @@ expressions
 expr 
 	::= OBJECTID:oi ASSIGN expr:e
 		{: RESULT = new assign(curr_lineno(), oi, e); :}
-		
-	/*	
-	dispatch(int line, Exp a1-exp, AS a2 -name, Exp a3-actual)
-	static_dispatch(int, Exp a1-exp, AS a2-type_name, AS a3- name, Exp a4 -actual)
-	*/	
-	/*TO IMPLEMENT: dispatch*/
-	/*rules 2 and 3*/
+
+	| expr:e AT TYPEID:ti DOT OBJECTID:oi LPAREN e_list:el RPAREN
+		{: RESULT = new static_dispatch(curr_lineno(), e, ti, oi, el); :}
+
+	| expr:e DOT OBJECTID:oi LPAREN e_list:el RPAREN
+		{: RESULT = new dispatch(curr_lineno(), e, oi, el); :}
+
+	| OBJECTID:oi LPAREN e_list:el RPAREN
+		{: RESULT = new dispatch(curr_lineno(), new object(curr_lineno(), AbstractTable.idtable.addString("self")), oi, el); :}
 	
 	| IF expr:e1 THEN expr:e2 ELSE expr:e3 FI
 		{: RESULT = new cond(curr_lineno(), e1, e2, e3); :}
