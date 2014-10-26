@@ -253,143 +253,61 @@ import java_cup.runtime.Symbol;
 			}
 }
 
-{WHITESPACE} {;}
+{WHITESPACE} 	{;}
 
-{NEWLINE}	{curr_lineno++;}
+{NEWLINE}		{	curr_lineno++;}
 
-{LINECMNT} 		   {	/*System.out.println("#"+curr_lineno+ " " + yytext());*/
-						curr_lineno++; }
+{LINECMNT} 		{	/*System.out.println("#"+curr_lineno+ " " + yytext());*/
+					curr_lineno++; }
 
-{UNMATCH}	{
-						String err_msg = new String("Unmatched Comment Terminator: *) ");
-						StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
-						Symbol ret = new Symbol(TokenConstants.ERROR);
-						ret.value = error;
-						return ret;}
+{UNMATCH}		{	String err_msg = new String("Unmatched Comment Terminator: *) ");
+					StringSymbol error = new StringSymbol(err_msg, err_msg.length(), 0);
+					Symbol ret = new Symbol(TokenConstants.ERROR);
+					ret.value = error;
+					return ret;}
 				
-{INT}	{  AbstractSymbol intvalue = AbstractTable.inttable.addString(yytext());
-		   Symbol ret = new Symbol(TokenConstants.INT_CONST);
-		   ret.value = intvalue;
-		   return ret;}
-						  
-		   
-{TRUE } { AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
-		  Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
-		  ret.value = boolvalue;
-		  return ret;}
+{INT}			{ 	AbstractSymbol intvalue = AbstractTable.inttable.addString(yytext());
+		 	  		Symbol ret = new Symbol(TokenConstants.INT_CONST);
+		   			ret.value = intvalue;
+		   			return ret;}
+						  	   
+{TRUE }		 	{ 	AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
+		 			Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
+		  			ret.value = boolvalue;
+		  			return ret;}
 		  
-{FALSE}	{ AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
-		  Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
-		  ret.value = boolvalue;
-		  return ret;}
+{FALSE}			{ 	AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
+			  		Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
+		  			ret.value = boolvalue;
+		  			return ret;}
 					
-{CLASS}					{
-						  /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.CLASS);
-						 /* ret.value = lex_val;*/
-						  return ret;
-						 }
-{CASE} 				{
-						  /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.CASE);
-						  /*ret.value = lex_val;*/
-						  return ret;
-						 }
-{ESAC} 					{
-						  /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.ESAC);
-						  /*ret.value = lex_val;*/
-						  return ret;
-						 }
-{ELSE} {
-						 /* AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.ELSE);
-						 /* ret.value = lex_val;*/
-						  return ret;
-						 }
-{POOL}  {
-						  /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.POOL);
-						  /*ret.value = lex_val;*/
-						  return ret;
-						 }
-{LOOP} {
-						  /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.LOOP);
-						  /*ret.value = lex_val;*/
-						  return ret;
-						 }
-{LET} {
-						 /* AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.LET);
-						 /* ret.value = lex_val;*/
-						  return ret;
-						 }
-{IF} {
-						/*  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.IF);
-						  /*ret.value = lex_val;*/
-						  return ret;
-						 }
-{FI} {
-						 /* AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.FI);
-						  /*ret.value = lex_val;*/
-						  return ret;
-						 }
-{IN}  {
-						 /* AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.IN);
-						 /* ret.value = lex_val;*/
-						  return ret;
-						 }
-{OF} {
-						/*  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext()); */
-						  Symbol ret = new Symbol(TokenConstants.OF);
-						/*  ret.value = lex_val; */
-						  return ret;
-						 }
-{NEW}  {
-						 /* AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext()); */
-						  Symbol ret = new Symbol(TokenConstants.NEW);
-						 /*  ret.value = lex_val; */
-						  return ret;
-						 }
-{NOT} {
-						/*  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.NOT);
-						/*  ret.value = lex_val; */
-						  return ret;}
+{CLASS}			{ return new Symbol(TokenConstants.CLASS);}
+{CASE} 			{ return new Symbol(TokenConstants.CASE);}
+{ESAC} 			{ return new Symbol(TokenConstants.ESAC);}
+{ELSE} 			{ return new Symbol(TokenConstants.ELSE);}
+{POOL}  		{ return new Symbol(TokenConstants.POOL);}
+{LOOP} 			{ return new Symbol(TokenConstants.LOOP);}
+{LET} 			{ return new Symbol(TokenConstants.LET);}
+{IF} 			{ return new Symbol(TokenConstants.IF);}
+{FI} 			{ return new Symbol(TokenConstants.FI);}
+{IN} 			{ return new Symbol(TokenConstants.IN);}
+{OF} 			{ return new Symbol(TokenConstants.OF);}
+{NEW}  			{ return new Symbol(TokenConstants.NEW);}
+{NOT} 			{ return new Symbol(TokenConstants.NOT);}			  
+{ISV} 			{ return new Symbol(TokenConstants.ISVOID);}				  
+{INH} 			{ return new Symbol(TokenConstants.INHERITS);}						  
+{THEN} 			{ return new Symbol(TokenConstants.THEN);}						 
+{WHILE} 		{ return new Symbol(TokenConstants.WHILE);}
 						  
-{ISV} {  /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.ISVOID);
-						 /* ret.value = lex_val;*/
-						  return ret;}
+{TID} 			{   AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
+		  			Symbol ret = new Symbol(TokenConstants.TYPEID);
+		   			ret.value = lex_val;
+		   			return ret;}
 						  
-{INH} { /* AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.INHERITS);
-						 /* ret.value = lex_val;*/
-						  return ret; }
-						  
-{THEN} { /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.THEN);
-						 /* ret.value = lex_val; */
-						  return ret;}
-						 
-{WHILE} { /*AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());*/
-						  Symbol ret = new Symbol(TokenConstants.WHILE);
-						  /*ret.value = lex_val;*/
-						  return ret;}
-						  
-{TID} 	{  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
-		   Symbol ret = new Symbol(TokenConstants.TYPEID);
-		   ret.value = lex_val;
-		   return ret;}
-						  
-{OID} 	{  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
-		   Symbol ret = new Symbol(TokenConstants.OBJECTID);
-		   ret.value = lex_val;
-		   return ret;}
+{OID} 			{  AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
+				   Symbol ret = new Symbol(TokenConstants.OBJECTID);
+				   ret.value = lex_val;
+		 		   return ret;}
 						  
 {DARROW}		{ return new Symbol(TokenConstants.DARROW);}
 {EQ} 		    { return new Symbol(TokenConstants.EQ);}					  
@@ -410,7 +328,6 @@ import java_cup.runtime.Symbol;
 {PERIOD} 		{ return new Symbol(TokenConstants.DOT);}
 {NEG} 	 		{ return new Symbol(TokenConstants.NEG);}
 {LESS} 	 		{ return new Symbol(TokenConstants.LE);}
-
 
 .               { /* This rule should be the very last
                      in your lexical specification and
