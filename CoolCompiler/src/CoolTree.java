@@ -363,6 +363,7 @@ class program extends ProgramAbstract {
 	    System.err.println("Compilation halted due to static semantic errors.");
 	    System.exit(1);
 	}
+	
     }
     /** This method is the entry point to the code generator.  All of the work
       * of the code generator takes place within CgenClassTable constructor.

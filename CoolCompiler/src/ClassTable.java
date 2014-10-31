@@ -22,6 +22,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // This is a project skeleton file
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /** This class may be used to contain the semantic information such as
  * the inheritance graph.  You may use it or not as you like: it is only
@@ -29,14 +31,23 @@ import java.io.PrintStream;
 class ClassTable {
     private int semantErrors;
     private PrintStream errorStream;
+    
+    
+  //  private class_ obj_const;
+    private ArrayList<class_> class_map = new ArrayList();
+    private HashMap<AbstractSymbol, ArrayList<AbstractSymbol>> inheritance;
+    private ArrayList<AbstractSymbol> basics = new ArrayList();
+  //  private int curr_class = -1;
+  //  private class_ currentClass = null;
 
     /** Creates data structures representing basic Cool classes (Object,
      * IO, Int, Bool, String).  Please note: as is this method does not
      * do anything useful; you will need to edit it to make if do what
      * you want.
      * */
-    private void installBasicClasses() {
-	AbstractSymbol filename 
+    void installBasicClasses() {
+	
+    AbstractSymbol filename 
 	    = AbstractTable.stringtable.addString("<basic class>");
 	
 	// The following demonstrates how to create dummy parse trees to
@@ -189,28 +200,126 @@ class ClassTable {
 
 	/* Do somethind with Object_class, IO_class, Int_class,
            Bool_class, and Str_class here */
-
-	// NOT TO BE INCLUDED IN SKELETON
 	
-	Object_class.dump_with_types(System.err, 0);
-	IO_class.dump_with_types(System.err, 0);
-	Int_class.dump_with_types(System.err, 0);
-	Bool_class.dump_with_types(System.err, 0);
-	Str_class.dump_with_types(System.err, 0);
+	class_map.add(Object_class);
+	class_map.add(IO_class);
+	class_map.add(Int_class);
+	class_map.add(Bool_class);
+	class_map.add(Str_class);
+	
+	basics.add(IO_class.getName());
+	basics.add(Int_class.getName());
+	basics.add(Bool_class.getName());
+	basics.add(Str_class.getName());
+	
+	inheritance.put(Object_class.getName(), basics);
+	
     }
 	
-
-
+    
+  
     public ClassTable(Classes cls) {
 	semantErrors = 0;
 	errorStream = System.err;
 	
 	/* fill this in */
+	
+	
+	installBasicClasses();
+	class_ classcopy;
+	
+		/*Adds copy of classes to the class map*/
+		for(int i=0; i < cls.getLength(); i++){
+				classcopy = (class_) cls.getNth(i).copy();
+			
+				basic_inherit(classcopy, class_map);
+				basic_redefine(classcopy, class_map);
+				previously_defined(classcopy, class_map);
+			
+				class_map.add(classcopy);
+		}
+		
+		/*Checks if Main is defined*/
+		if (!class_map.contains(TreeConstants.Main)){
+				errorStream.print("Class Main is not defined");
+				semantError();
+		}
+		
+		/*Checks if a class inherits from an undefined class*/
+		for (int i=0; i < cls.getLength();i++){
+			classcopy = (class_) cls.getNth(i).copy();
+			correct_inherits(classcopy, class_map);
+		}
+		
+		/*
+		 * TODO: Inheritance Graph
+		 * 
+		 *  Builds the graph 
+		 */
+		
+		inheritance_graph(class_map);
+		check_cycle();
+	/*ClassTable END*/
+    }
+    
+    public void inheritance_graph(ArrayList<class_> cm){
+    	class_ classcopy;
+    	for(int i=0; i< cm.size(); i++){
+    			classcopy = cm.get(i);
+    			if (!inheritance.containsKey(classcopy.getParent())){
+    					inheritance.put(classcopy.getParent(), new ArrayList<AbstractSymbol>());
+    			}	
+    			inheritance.get(classcopy.getParent()).add(classcopy.getName());
+    			
+    	}
+    }
+    public void check_cycle(){
+    	/*TODO*/
+    }
+    
+    /*Checks if class inherits from Int, String or Bool*/
+    public void basic_inherit(class_ c, ArrayList<class_> cm)	{
+		for(int i=2; i<5; i++){
+			if(c.getParent() == cm.get(i).getName() || c.getParent() == TreeConstants.SELF_TYPE ){
+						semantError(c);
+						System.out.println("Cannot inherit from class Int, String, Bool or SELF_TYPE");
+				}
+		}
+		
+	}
+    
+    /*Verifies if any basic class is being redefined*/
+    public void basic_redefine(class_ c, ArrayList<class_> cm){
+    	for(int i=2; i<5; i++){
+    		if(c.getName() == cm.get(i).getName()){
+ 					semantError(c);
+ 					System.out.println("Cannot redefine basic classes: Object, IO, String, Int or Bool");
+ 			}
+    	}
+    }
+    /*Verifies if the remaining classes to add were defined more than once*/
+    public void previously_defined(class_ c, ArrayList<class_> cm){
+    	for(int i = 5; i < cm.size(); i++){
+			if(c.getName() == cm.get(i).getName()){
+					semantError(c);
+					System.out.println("Class was already defined: " + cm.get(i).getName().getString());
+			}
+		}
+    }
+    
+    /*------VERIFICAR!!!!!!!!!!!!*/
+    /*Class inherits from undefined class*/
+    public void correct_inherits(class_ c, ArrayList<class_> cm){
+    			if(!cm.contains(c.getParent())){
+    /*CHECK!!!*/	cm.remove(c);    
+    				semantError(c);
+    				System.out.println("Class " + c.getName().getString() + " inherits from undefined class");
+    			}
     }
 
     /** Prints line number and file name of the given class.
      *
-     * Also increments semantic error count.
+     * Also increments semantic error countc.
      *
      * @param c the class
      * @return a print stream to which the rest of the error message is
@@ -254,9 +363,9 @@ class ClassTable {
     }
 
     // NOT TO BE INCLUDED IN SKELETON
-    public static void main(String[] args) {
+   /* public static void main(String[] args) {
 	new ClassTable(null).installBasicClasses();
-    }
+    }*/
 }
 			  
     
