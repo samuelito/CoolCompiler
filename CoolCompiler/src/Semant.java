@@ -19,8 +19,10 @@ ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+
 import java_cup.runtime.Symbol;
 
 /** Static semantics driver class */
@@ -30,8 +32,15 @@ class Semant {
     public static void main(String[] args) {
 	args = Flags.handleFlags(args);
 	try {
-	    ASTLexer lexer = new ASTLexer(new InputStreamReader(System.in));
-	    ASTParser parser = new ASTParser(lexer);
+		
+		FileReader file =new FileReader(args[0]);    
+	    CoolLexer lexer = new CoolLexer(file);
+	    lexer.set_filename(args[0]);
+	    CoolCup parser = new CoolCup(lexer);
+	    
+	  //  ASTLexer lexer = new ASTLexer(new InputStreamReader(System.in));
+	 //   ASTParser parser = new ASTParser(lexer);
+	    
 	    Object result = parser.parse().value;
 	    ((ProgramAbstract)result).semant();
 	    ((ProgramAbstract)result).dump_with_types(System.out, 0);

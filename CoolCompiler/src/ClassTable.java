@@ -23,6 +23,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 /** This class may be used to contain the semantic information such as
@@ -33,13 +34,12 @@ class ClassTable {
     private PrintStream errorStream;
     
     
-  //  private class_ obj_const;
     private ArrayList<class_> class_map = new ArrayList();
-    private HashMap<AbstractSymbol, ArrayList<AbstractSymbol>> inheritance;
-    private ArrayList<AbstractSymbol> basics = new ArrayList();
-  //  private int curr_class = -1;
-  //  private class_ currentClass = null;
-
+    private HashMap<String, ArrayList<String>> inheritance;
+    private ArrayList<String> basics = new ArrayList();
+ 
+    private class_ currentClass = null;
+   
     /** Creates data structures representing basic Cool classes (Object,
      * IO, Int, Bool, String).  Please note: as is this method does not
      * do anything useful; you will need to edit it to make if do what
@@ -207,12 +207,12 @@ class ClassTable {
 	class_map.add(Bool_class);
 	class_map.add(Str_class);
 	
-	basics.add(IO_class.getName());
-	basics.add(Int_class.getName());
-	basics.add(Bool_class.getName());
-	basics.add(Str_class.getName());
+	basics.add(TreeConstants.IO.getString());
+	basics.add(TreeConstants.Int.getString());
+	basics.add(TreeConstants.Bool.getString());
+	basics.add(TreeConstants.Str.getString());
 	
-	inheritance.put(Object_class.getName(), basics);
+	inheritance.put(TreeConstants.Object_.getString(), basics);
 	
     }
 	
@@ -224,6 +224,7 @@ class ClassTable {
 	
 	/* fill this in */
 	
+	inheritance = new HashMap<String, ArrayList<String>>();
 	
 	installBasicClasses();
 	class_ classcopy;
@@ -240,44 +241,117 @@ class ClassTable {
 		}
 		
 		/*Checks if Main is defined*/
-		if (!class_map.contains(TreeConstants.Main)){
-				errorStream.print("Class Main is not defined");
-				semantError();
-		}
+		contains_main(class_map);
 		
 		/*Checks if a class inherits from an undefined class*/
-		for (int i=0; i < cls.getLength();i++){
-			classcopy = (class_) cls.getNth(i).copy();
-			correct_inherits(classcopy, class_map);
-		}
-		
-		/*
-		 * TODO: Inheritance Graph
-		 * 
-		 *  Builds the graph 
-		 */
-		
+		undefined_inherit(class_map);	
+	
+		/*Builds the graph*/
 		inheritance_graph(class_map);
-		check_cycle();
+		
+		/*Check for Cycles*/
+		check_cycles(inheritance);
+		
 	/*ClassTable END*/
     }
     
-    public void inheritance_graph(ArrayList<class_> cm){
-    	class_ classcopy;
-    	for(int i=0; i< cm.size(); i++){
-    			classcopy = cm.get(i);
-    			if (!inheritance.containsKey(classcopy.getParent())){
-    					inheritance.put(classcopy.getParent(), new ArrayList<AbstractSymbol>());
-    			}	
-    			inheritance.get(classcopy.getParent()).add(classcopy.getName());
-    			
+    /**
+     * METHODS FOR INHERITANCE GRAPH BUILDING
+     */
+    
+    
+    /* Creates a HashMap with all classes in the inheritance graph
+     * Set values to unchecked (false)
+     * Make a Depth First Traversal in the graph
+     * Nodes unchecked - They produce a Cycle.
+     * */
+    public void check_cycles(HashMap<String, ArrayList<String>> inherit){
+    	
+    	HashMap<String, Boolean> checked = new HashMap<String, Boolean>();
+    		for (String key : inherit.keySet() ) {
+    					checked.put(key, false);
+    					for ( String value : inherit.get(key) ) {
+    							checked.put(value, false);
+    					}
     	}
-    }
-    public void check_cycle(){
-    	/*TODO*/
+    	
+    	depthFirstTraversal(checked, TreeConstants.Object_.toString());
+        
+    	for (String c : checked.keySet()) {
+    			if (!checked.get(c)) {
+    				semantError();
+    				System.out.println("Inheritance Graph haves a cycle: Class: " + c);
+    			}
+    	}	
     }
     
-    /*Checks if class inherits from Int, String or Bool*/
+    public boolean depthFirstTraversal(HashMap<String, Boolean> check, String parent){
+    	check.put(parent, true);
+    	if (inheritance.get(parent) == null) {
+    		return true;
+    	}
+    	for (String child : inheritance.get(parent)) {
+    			depthFirstTraversal(check, child);
+    	}
+    	return true;
+    }
+    
+    /*	Start inheritance after 5 basic classes.
+	 * 	Basics Classes already added to inheritance HashMap.
+	 * */
+    public void inheritance_graph(ArrayList<class_> cm){
+    	
+    	for (int i=5; i< cm.size(); i++){
+    		class_ current = class_map.get(i);
+    		if(!inheritance.containsKey(current.getParent().getString())){
+    			inheritance.put(current.getParent().getString(), new ArrayList<String>());
+    		}
+    		inheritance.get(current.getParent().getString()).add(current.getName().getString());
+    	}
+    	
+    	/*Testing Inheritance Graph*/
+    	/*for (String key : inheritance.keySet()){
+    		System.out.println("Key: " + key);
+    		for (String value : inheritance.get(key)){
+    			System.out.println("Value: " + value);
+    		}
+    	}*/
+    }
+    
+    /*Check for classes inheriting from Undefined classes*/
+    public void undefined_inherit(ArrayList<class_> cm){
+    	int found;
+		for(int i=5; i<cm.size();i++){
+			found=0;	
+			for(int j=0; j<cm.size();j++){
+				if((cm.get(i).getParent().getString()).equals(cm.get(j).getName().getString())){
+					found=1;
+					break;
+				}
+			}
+			if(found==0){
+				semantError(cm.get(i));
+				System.out.println("Class " + cm.get(i).getName().getString() +" inherits from undefined class");
+			}			
+		}
+    }
+    
+    /*Verifies if Main class is defined in class_map*/
+    public void contains_main(ArrayList<class_> cm){
+    	int found =0;
+    	for(int i=0; i<cm.size();i++){
+    		if(cm.get(i).getName().getString().equals("Main")){
+    			found=1;
+    			break;
+    		}
+    	}
+    	if(found == 0){
+    		errorStream.print("Class Main is not defined");
+			semantError();
+    	}
+    }
+    
+    /*Checks if class inherits from Int, String, Bool or SELF_TYPE*/
     public void basic_inherit(class_ c, ArrayList<class_> cm)	{
 		for(int i=2; i<5; i++){
 			if(c.getParent() == cm.get(i).getName() || c.getParent() == TreeConstants.SELF_TYPE ){
@@ -307,14 +381,57 @@ class ClassTable {
 		}
     }
     
-    /*------VERIFICAR!!!!!!!!!!!!*/
-    /*Class inherits from undefined class*/
-    public void correct_inherits(class_ c, ArrayList<class_> cm){
-    			if(!cm.contains(c.getParent())){
-    /*CHECK!!!*/	cm.remove(c);    
-    				semantError(c);
-    				System.out.println("Class " + c.getName().getString() + " inherits from undefined class");
-    			}
+    /**
+     * FOR TYPE CHECKING **
+     */
+    
+    public boolean subtype(AbstractSymbol a, AbstractSymbol b){
+    	if (a.equals(TreeConstants.No_type) || b.equals(TreeConstants.No_type)) {
+    		return false;
+    	}
+    	if(a.equals(b)){
+    		return true;
+    	} 
+    	else if (!(a.equals(TreeConstants.Object_))){
+    		return subtype(parent(a), b);
+    	}
+    		return false;
+    	}
+    
+    public class_ findClass(AbstractSymbol a) {
+    	for(int i = 0; i < class_map.size(); i++){
+    		if(class_map.get(i).getName() == a){
+    			return class_map.get(i);
+    		}
+    	}
+    	semantError(currentClass);
+    	System.out.println("Class doesnt exist " + a.getString());
+    	return null;
+    	}
+    
+    public class_ parent(class_ c){
+    	for(int i = 0; i < class_map.size(); i++){
+    		if(c.getParent() == class_map.get(i).getName()){
+    			return class_map.get(i);
+    		}
+    	}
+    	return null;
+    	}
+    
+    public AbstractSymbol parent(AbstractSymbol a){
+    	AbstractSymbol b = findClass(a).getParent();
+    	if(b != null){
+    		return b;
+    	}
+    	return null;
+    }
+    
+    public void setCurrClass(class_ c){
+		currentClass = c;
+    }
+
+    public class_ getCurrClass(){
+    	return currentClass;
     }
 
     /** Prints line number and file name of the given class.

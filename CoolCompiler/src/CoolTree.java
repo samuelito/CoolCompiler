@@ -114,6 +114,8 @@ abstract class ClassAbstract extends TreeNode {
     public abstract AbstractSymbol getParent();
     public abstract AbstractSymbol getFilename();
     public abstract Features getFeatures();
+   
+    public abstract void type_check(SymbolTable o, ClassTable mc);
 
 }
 
@@ -151,6 +153,7 @@ abstract class Feature extends TreeNode {
         super(lineNumber);
     }
     public abstract void dump_with_types(PrintStream out, int n);
+    public abstract void type_check(SymbolTable o, ClassTable mc);
 
 }
 
@@ -188,7 +191,7 @@ abstract class FormalAbstract extends TreeNode {
         super(lineNumber);
     }
     public abstract void dump_with_types(PrintStream out, int n);
-
+    public abstract void type_check(SymbolTable o, ClassTable mc);
 }
 
 
@@ -234,7 +237,8 @@ abstract class Expression extends TreeNode {
         else
             { out.println(Utilities.pad(n) + ": _no_type"); }
     }
-    public abstract void code(PrintStream s);
+    public abstract void code(PrintStream s);  
+    public abstract AbstractSymbol type_check(SymbolTable o, ClassTable mc);
 
 }
 
@@ -272,7 +276,8 @@ abstract class Case extends TreeNode {
         super(lineNumber);
     }
     public abstract void dump_with_types(PrintStream out, int n);
-
+    
+    public abstract void type_check(SymbolTable o, ClassTable mc);
 }
 
 
@@ -357,7 +362,14 @@ class program extends ProgramAbstract {
 	/* ClassTable constructor may do some semantic analysis */
 	ClassTable classTable = new ClassTable(classes);
 	
+	
 	/* some semantic analysis code may go here */
+	
+	SymbolTable o = new SymbolTable();
+	
+	for (Enumeration e = classes.getElements(); e.hasMoreElements();) {
+			((ClassAbstract) e.nextElement()).type_check(o, classTable);
+	}
 
 	if (classTable.errors()) {
 	    System.err.println("Compilation halted due to static semantic errors.");
@@ -429,6 +441,15 @@ class class_ extends ClassAbstract {
     public AbstractSymbol getParent()   { return parent; }
     public AbstractSymbol getFilename() { return filename; }
     public Features getFeatures()       { return features; }
+    
+    public void type_check(SymbolTable o, ClassTable mc) {
+    	o.enterScope();
+    	mc.setCurrClass((class_) copy());
+    	for (Enumeration e = features.getElements(); e.hasMoreElements();) {
+    			((Feature) e.nextElement()).type_check(o, mc);
+    	}
+    	o.exitScope();
+    	}
 
 }
 
@@ -476,9 +497,17 @@ class method extends Feature {
 	    ((FormalAbstract)e.nextElement()).dump_with_types(out, n + 2);
         }
         dump_AbstractSymbol(out, n + 2, return_type);
-	expr.dump_with_types(out, n + 2);
+        expr.dump_with_types(out, n + 2);
     }
-
+    
+    public void type_check(SymbolTable o, ClassTable mc) {
+    	o.enterScope();
+    		for (Enumeration e = formals.getElements(); e.hasMoreElements();) {
+    			((FormalAbstract) e.nextElement()).type_check(o, mc);
+    		}
+    		expr.type_check(o, mc);
+    	o.exitScope();
+    }
 }
 
 
@@ -518,9 +547,13 @@ class attr extends Feature {
         out.println(Utilities.pad(n) + "_attr");
         dump_AbstractSymbol(out, n + 2, name);
         dump_AbstractSymbol(out, n + 2, type_decl);
-	init.dump_with_types(out, n + 2);
+        init.dump_with_types(out, n + 2);
     }
 
+    public void type_check(SymbolTable o, ClassTable mc) {
+    		o.addId(name, type_decl);
+    		init.type_check(o, mc);
+    }
 }
 
 
@@ -557,6 +590,10 @@ class formal extends FormalAbstract {
         dump_AbstractSymbol(out, n + 2, name);
         dump_AbstractSymbol(out, n + 2, type_decl);
     }
+    
+    public void type_check(SymbolTable o, ClassTable mc) {
+    		o.addId(name, type_decl);
+    	}
 
 }
 
@@ -599,7 +636,11 @@ class branch extends Case {
         dump_AbstractSymbol(out, n + 2, type_decl);
 	expr.dump_with_types(out, n + 2);
     }
-
+	@Override
+	public void type_check(SymbolTable o, ClassTable mc) {
+		 expr.type_check(o, mc);
+	}
+   
 }
 
 
@@ -636,6 +677,24 @@ class assign extends Expression {
         dump_AbstractSymbol(out, n + 2, name);
 	expr.dump_with_types(out, n + 2);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = (AbstractSymbol) o.lookup(name);
+    	AbstractSymbol b = expr.type_check(o, mc);
+    		
+    		if(b != null && mc.subtype(b, a)){
+    			set_type(b);
+    		} 
+    		else {
+    			mc.semantError(mc.getCurrClass());
+    			System.out.println("Type " + b.getString()
+    					+ " of assigned expression does not conform to declared type "
+    					+ a.getString()
+    					+ " of identifier " + name.getString()
+    					+ ".");
+    		}
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -697,6 +756,10 @@ class static_dispatch extends Expression {
         out.println(Utilities.pad(n + 2) + ")");
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -752,6 +815,10 @@ class dispatch extends Expression {
         out.println(Utilities.pad(n + 2) + ")");
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -803,6 +870,11 @@ class cond extends Expression {
 	else_exp.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -849,11 +921,16 @@ class loop extends Expression {
 	body.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
       * @param s the output stream 
       * */
+    
     public void code(PrintStream s) {
     }
 
@@ -897,6 +974,10 @@ class typcase extends Expression {
         }
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -939,6 +1020,10 @@ class block extends Expression {
 	    ((Expression)e.nextElement()).dump_with_types(out, n + 2);
         }
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -996,6 +1081,10 @@ class let extends Expression {
 	body.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1041,6 +1130,20 @@ class plus extends Expression {
 	e1.dump_with_types(out, n + 2);
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	
+    	if((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))){
+    		set_type(TreeConstants.Int);
+    	} 
+    	else {
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("non-Int arguments");
+    	}
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1088,6 +1191,19 @@ class sub extends Expression {
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	if((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))){
+    		set_type(TreeConstants.Int);
+    	} 
+    	else {
+    	mc.semantError(mc.getCurrClass());
+    	System.out.println("non-Int arguments");
+    	}
+    	return get_type();
+    	}
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1133,6 +1249,19 @@ class mul extends Expression {
 	e1.dump_with_types(out, n + 2);
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	if((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))){
+    		set_type(TreeConstants.Int);
+    	} 
+    	else {
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("non-Int arguments");
+    	}
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1180,6 +1309,19 @@ class divide extends Expression {
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	if((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))){
+    		set_type(TreeConstants.Int);
+    	} 
+    	else {
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("non-Int arguments");
+    	}
+    	return get_type();
+    	}
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1220,6 +1362,11 @@ class neg extends Expression {
         out.println(Utilities.pad(n) + "_neg");
 	e1.dump_with_types(out, n + 2);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1267,6 +1414,10 @@ class lt extends Expression {
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1312,6 +1463,11 @@ class eq extends Expression {
 	e1.dump_with_types(out, n + 2);
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1359,6 +1515,10 @@ class leq extends Expression {
 	e2.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1399,6 +1559,10 @@ class comp extends Expression {
         out.println(Utilities.pad(n) + "_comp");
 	e1.dump_with_types(out, n + 2);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1441,6 +1605,11 @@ class int_const extends Expression {
 	dump_AbstractSymbol(out, n + 2, token);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	set_type(TreeConstants.Int);
+    	return get_type();
+    }
     /** Generates code for this expression.  This method method is provided
       * to you as an example of code generation.
       * @param s the output stream 
@@ -1482,6 +1651,12 @@ class bool_const extends Expression {
 	dump_Boolean(out, n + 2, val);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	set_type(TreeConstants.Bool);
+    	return get_type();
+    }
+    
     /** Generates code for this expression.  This method method is provided
       * to you as an example of code generation.
       * @param s the output stream 
@@ -1524,6 +1699,12 @@ class string_const extends Expression {
 	out.println("\"");
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	set_type(TreeConstants.Str);
+    	return get_type();
+    }
+    
     /** Generates code for this expression.  This method method is provided
       * to you as an example of code generation.
       * @param s the output stream 
@@ -1565,6 +1746,12 @@ class new_ extends Expression {
 	dump_AbstractSymbol(out, n + 2, type_name);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	set_type(type_name);
+    	return get_type();
+    }
+    
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1606,6 +1793,10 @@ class isvoid extends Expression {
 	e1.dump_with_types(out, n + 2);
 	dump_type(out, n);
     }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1641,6 +1832,11 @@ class no_expr extends Expression {
         dump_line(out, n);
         out.println(Utilities.pad(n) + "_no_expr");
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	set_type(TreeConstants.No_type);
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1682,6 +1878,10 @@ class object extends Expression {
         out.println(Utilities.pad(n) + "_object");
 	dump_AbstractSymbol(out, n + 2, name);
 	dump_type(out, n);
+    }
+    
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
