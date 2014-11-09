@@ -758,6 +758,11 @@ class static_dispatch extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
+    	expr.type_check(o, mc);
+    	for (Enumeration e = actual.getElements(); e.hasMoreElements();) {
+    	((Expression) e.nextElement()).type_check(o, mc);
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -817,6 +822,10 @@ class dispatch extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	expr.type_check(o, mc);
+    	for (Enumeration e = actual.getElements(); e.hasMoreElements();) {
+    		((Expression) e.nextElement()).type_check(o, mc);
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -873,6 +882,15 @@ class cond extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
+    	AbstractSymbol a = pred.type_check(o, mc);
+    	AbstractSymbol b = then_exp.type_check(o, mc);
+    	AbstractSymbol c = else_exp.type_check(o, mc);
+    	
+    	/*If pred is not a condition, then is not a valid if */
+    	if(a != TreeConstants.Bool){
+    			mc.semantError(mc.getCurrClass());
+    			System.out.println("Predicate of 'if' does not have type Bool.");
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -923,7 +941,15 @@ class loop extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
-    	return get_type();
+
+    	if(pred.type_check(o, mc) == TreeConstants.Bool){
+    		set_type(TreeConstants.Object_);
+    	} else {
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("Loop condition does not have type Bool.");
+    	}
+    		body.type_check(o, mc);
+    		return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -970,13 +996,17 @@ class typcase extends Expression {
         out.println(Utilities.pad(n) + "_typcase");
 	expr.dump_with_types(out, n + 2);
         for (Enumeration e = cases.getElements(); e.hasMoreElements();) {
-	    ((Case)e.nextElement()).dump_with_types(out, n + 2);
+        	((Case)e.nextElement()).dump_with_types(out, n + 2);
         }
 	dump_type(out, n);
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
-    	return get_type();
+    	
+    	for (Enumeration e = cases.getElements(); e.hasMoreElements();) {
+    		((Case) e.nextElement()).type_check(o, mc);
+    		}
+    		return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1023,6 +1053,11 @@ class block extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
+    	for (Enumeration e = body.getElements(); e.hasMoreElements();) {
+    		set_type(((Expression) e.nextElement()).type_check(o, mc));
+    		}
+    		
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1083,6 +1118,27 @@ class let extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	o.enterScope();
+    	AbstractSymbol a = init.type_check(o, mc);
+    	o.addId(identifier, type_decl);
+    	AbstractSymbol b = body.type_check(o, mc);
+
+    	if(a == null){
+  	
+    		set_type(b);
+    		
+    	} else if(mc.subtype(a, type_decl)){
+    	
+    		set_type(b);
+    		
+    	} else {
+    	
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println(" Type "+a+" of assigned expression does not conform to declared type "+type_decl+" of identifier "+identifier+".");
+    		
+    	}
+    	
+    	o.exitScope();
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1366,8 +1422,20 @@ class neg extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	
+    	if(a == TreeConstants.Int){
+    	
+    		set_type(TreeConstants.Int);
+    		
+    	} else {
+    	
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("Argument of '~' has type "+ a +" instead of Int.");
+    	}
     	return get_type();
-    }
+    	}
+    
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
@@ -1416,6 +1484,18 @@ class lt extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	
+    	if ((a == TreeConstants.Int) && (b == TreeConstants.Int)) {
+    	
+    		set_type(TreeConstants.Bool);
+    		
+    	} else {
+    	
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("non-Int arguments: "+ a.getString() + " - "+ b.getString());
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1467,7 +1547,27 @@ class eq extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	
+    	/* If both constants are of one of the basic types and not null*/
+    	if (a == TreeConstants.Int || a == TreeConstants.Str || a == TreeConstants.Bool 
+    		&& b == TreeConstants.Int || b == TreeConstants.Str || b == TreeConstants.Bool) {
+    	
+    		/*If it's the same type */
+    		if (a == b) {
+    			
+    			set_type(TreeConstants.Bool);
+    			
+    		}else{
+    			
+    			mc.semantError(mc.getCurrClass());
+    			System.out.println("Illegal comparison with a basic type");
+    			
+    		}
+    	}
     	return get_type();
+    	
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1517,6 +1617,20 @@ class leq extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	AbstractSymbol b = e2.type_check(o, mc);
+    	
+    	/* If both constants are from the basic type Int */
+    	if ((a == TreeConstants.Int)&& (b == TreeConstants.Int)) {
+    	
+    		set_type(TreeConstants.Bool);
+    		
+    	} else {
+    	
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("non-Int arguments: "+ a.getString() + " + "+ b.getString());
+    	
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1562,6 +1676,19 @@ class comp extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
+    	AbstractSymbol a = e1.type_check(o, mc);
+    	
+    	if (a == TreeConstants.Bool) {
+    	
+    		set_type(TreeConstants.Bool);
+    	
+    	} else {
+    	
+    		mc.semantError(mc.getCurrClass());
+    		System.out.println("non-Bool argument: "+ a.getString());
+    		
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1795,7 +1922,13 @@ class isvoid extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
-    	return get_type();
+    	
+    	if(e1.type_check(o, mc) != null) {
+    		
+    		set_type(TreeConstants.Bool);
+    		
+    		}
+    		return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -1881,7 +2014,22 @@ class object extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
-    	return get_type();
+    	
+    	if(name == TreeConstants.self){
+    		
+    		set_type(TreeConstants.SELF_TYPE);
+    		 
+    	} else {
+    		
+    		AbstractSymbol x = (AbstractSymbol) o.lookup(name);
+    		if(x == null){
+    		
+    			mc.semantError(mc.getCurrClass());
+    			System.out.println("Undeclared identifier "+ name.getString());
+    		}
+    		set_type(x);
+    	}
+    		return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
