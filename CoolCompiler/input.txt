@@ -1,16 +1,38 @@
-class else
+class A inherits C {
+	x : Int <- 3;
+	y : Int <- 5;
+	a() : Int { 4 };
+	z : A <- (new C);
+	b : Bool;
+	cond() : Int { if b then 1 else 0 fi };
+	
+	
+};
 
-self
-x <- S  *)
-yut --Sam is the best
-x  String  
-"else~`!@#$$%^&*(){}[]-_=+|\:;'?><.,"
-=>  45
-(* sdh  E asda j32 3kj 
- fsdfsfa 
- afafdsfsd 
- fwfwefwefw  *)
-"else 123 not	
- "sam is the"
- *)
- (* djkhsfhjashafhaskjdhas *)   
+Class BB__ inherits A {
+	z : String <- "Samuel";
+	b() : String { z <- "foo" };
+};
+
+
+class Main {
+	main():C {
+	  (new C).init(1,2)
+	};
+};
+
+class C  {
+	a : Int;
+	b : Bool;
+	init(x : Int, y : Bool) : C {
+           {
+		a <- x;
+		b <- y;
+		self;
+           }
+	};
+};
+
+
+
+

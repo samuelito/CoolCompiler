@@ -37,7 +37,8 @@ class Parser {
 		//CoolLexer lexer = new CoolLexer(new InputStreamReader(System.in));
 	    CoolLexer lexer = new CoolLexer(file);
 	    lexer.set_filename(args[0]);
-	    CoolCup parser = new CoolCup(lexer);
+	     CoolCup parser = new CoolCup(lexer);
+	    
 	    Symbol result = (Flags.parser_debug 
 			     ? parser.debug_parse()
 			     : parser.parse());

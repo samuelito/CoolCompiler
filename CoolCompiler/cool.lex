@@ -271,12 +271,15 @@ import java_cup.runtime.Symbol;
 		   			ret.value = intvalue;
 		   			return ret;}
 						  	   
-{TRUE }		 	{ 	AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
+{TRUE}		 	{ 	
+					Boolean boolvalue = true;
 		 			Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
 		  			ret.value = boolvalue;
 		  			return ret;}
 		  
-{FALSE}			{ 	AbstractSymbol boolvalue = AbstractTable.idtable.addString(yytext());
+{FALSE}			{ 	
+					
+			  		Boolean boolvalue = false;
 			  		Symbol ret = new Symbol(TokenConstants.BOOL_CONST);
 		  			ret.value = boolvalue;
 		  			return ret;}

@@ -404,8 +404,11 @@ class ClassTable {
     			return class_map.get(i);
     		}
     	}
-    	semantError(currentClass);
-    	System.out.println("Class doesnt exist " + a.getString());
+    	
+    	if(!a.getString().equals("SELF_TYPE")){
+    		semantError(currentClass);
+    		System.out.println("Class doesnt exist " + a.getString());
+    	}
     	return null;
     	}
     

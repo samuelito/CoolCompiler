@@ -98,7 +98,7 @@ abstract class ProgramAbstract extends TreeNode {
         super(lineNumber);
     }
     public abstract void dump_with_types(PrintStream out, int n);
-    public abstract void semant();
+    public abstract void semant(); 
     public abstract void cgen(PrintStream s);
 
 }
@@ -362,15 +362,15 @@ class program extends ProgramAbstract {
 	/* ClassTable constructor may do some semantic analysis */
 	ClassTable classTable = new ClassTable(classes);
 	
-	
 	/* some semantic analysis code may go here */
 	
 	SymbolTable o = new SymbolTable();
 	
+	
 	for (Enumeration e = classes.getElements(); e.hasMoreElements();) {
 			((ClassAbstract) e.nextElement()).type_check(o, classTable);
 	}
-
+	
 	if (classTable.errors()) {
 	    System.err.println("Compilation halted due to static semantic errors.");
 	    System.exit(1);
@@ -446,7 +446,7 @@ class class_ extends ClassAbstract {
     	o.enterScope();
     	mc.setCurrClass((class_) copy());
     	for (Enumeration e = features.getElements(); e.hasMoreElements();) {
-    			((Feature) e.nextElement()).type_check(o, mc);
+    		((Feature)e.nextElement()).type_check(o, mc);
     	}
     	o.exitScope();
     	}
@@ -638,7 +638,7 @@ class branch extends Case {
     }
 	@Override
 	public void type_check(SymbolTable o, ClassTable mc) {
-		 expr.type_check(o, mc);
+			expr.type_check(o, mc);
 	}
    
 }
@@ -675,15 +675,15 @@ class assign extends Expression {
         dump_line(out, n);
         out.println(Utilities.pad(n) + "_assign");
         dump_AbstractSymbol(out, n + 2, name);
-	expr.dump_with_types(out, n + 2);
-	dump_type(out, n);
+        expr.dump_with_types(out, n + 2);
+        dump_type(out, n);
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	AbstractSymbol a = (AbstractSymbol) o.lookup(name);
     	AbstractSymbol b = expr.type_check(o, mc);
-    		
-    		if(b != null && mc.subtype(b, a)){
+    	
+    		if(!b.equals(null) && mc.subtype(b, a)){
     			set_type(b);
     		} 
     		else {
@@ -759,7 +759,24 @@ class static_dispatch extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
-    	expr.type_check(o, mc);
+    	AbstractSymbol a = expr.type_check(o, mc);
+    	set_type(type_name);
+    	/*	if(mc.findClass(a) == null ){
+    		
+    		if(TreeConstants.SELF_TYPE.equals(a)){
+        		set_type(TreeConstants.SELF_TYPE);
+    		}
+    		else{
+    		mc.semantError(mc.getCurrClass());
+			System.out.println("Class " + 
+					a
+    		+" cannot be used in dispatch");
+    		}
+    	}
+    	else {
+    		set_type(type_name);
+    	}
+    	*/
     	for (Enumeration e = actual.getElements(); e.hasMoreElements();) {
     	((Expression) e.nextElement()).type_check(o, mc);
     	}
@@ -811,7 +828,7 @@ class dispatch extends Expression {
     public void dump_with_types(PrintStream out, int n) {
         dump_line(out, n);
         out.println(Utilities.pad(n) + "_dispatch");
-	expr.dump_with_types(out, n + 2);
+        expr.dump_with_types(out, n + 2);
         dump_AbstractSymbol(out, n + 2, name);
         out.println(Utilities.pad(n + 2) + "(");
         for (Enumeration e = actual.getElements(); e.hasMoreElements();) {
@@ -822,10 +839,30 @@ class dispatch extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
-    	expr.type_check(o, mc);
+    	
+    	AbstractSymbol a = expr.type_check(o, mc);
+    	set_type(a);
+    	/*
+    	if(mc.findClass(a) == null ){
+    		
+    		if(TreeConstants.SELF_TYPE.equals(a)){
+        		set_type(TreeConstants.SELF_TYPE);
+    		}
+    		else{
+    		mc.semantError(mc.getCurrClass());
+			System.out.println("Class " + 
+					a.getString()
+    		+" cannot be used in dispatch");
+    		}
+    	}
+    	else {
+    		set_type(a);
+    	}*/
+    	
     	for (Enumeration e = actual.getElements(); e.hasMoreElements();) {
     		((Expression) e.nextElement()).type_check(o, mc);
     	}
+    	
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -886,11 +923,16 @@ class cond extends Expression {
     	AbstractSymbol b = then_exp.type_check(o, mc);
     	AbstractSymbol c = else_exp.type_check(o, mc);
     	
+    	if(b.equals(c)){
+    		set_type(b);
+    	}
+ 	
     	/*If pred is not a condition, then is not a valid if */
-    	if(a != TreeConstants.Bool){
+    	if(!(a.equals(TreeConstants.Bool))){
     			mc.semantError(mc.getCurrClass());
     			System.out.println("Predicate of 'if' does not have type Bool.");
     	}
+    	
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -942,14 +984,14 @@ class loop extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
 
-    	if(pred.type_check(o, mc) == TreeConstants.Bool){
+    	if(pred.type_check(o, mc).equals(TreeConstants.Bool)){
     		set_type(TreeConstants.Object_);
     	} else {
     		mc.semantError(mc.getCurrClass());
-    		System.out.println("Loop condition does not have type Bool.");
+    		System.out.println("Loop condition does not have type Bool");
     	}
-    		body.type_check(o, mc);
-    		return get_type();
+    	body.type_check(o, mc);
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -994,18 +1036,21 @@ class typcase extends Expression {
     public void dump_with_types(PrintStream out, int n) {
         dump_line(out, n);
         out.println(Utilities.pad(n) + "_typcase");
-	expr.dump_with_types(out, n + 2);
+        expr.dump_with_types(out, n + 2);
         for (Enumeration e = cases.getElements(); e.hasMoreElements();) {
         	((Case)e.nextElement()).dump_with_types(out, n + 2);
         }
 	dump_type(out, n);
     }
     
-    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
-    	
-    	for (Enumeration e = cases.getElements(); e.hasMoreElements();) {
-    		((Case) e.nextElement()).type_check(o, mc);
+    public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {	
+    		
+    		expr.type_check(o, mc);
+    		for (Enumeration e = cases.getElements(); e.hasMoreElements();) {
+    			((Case) e.nextElement()).type_check(o, mc);
     		}
+    		
+    		set_type(TreeConstants.Object_);
     		return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1056,8 +1101,9 @@ class block extends Expression {
     	
     	for (Enumeration e = body.getElements(); e.hasMoreElements();) {
     		set_type(((Expression) e.nextElement()).type_check(o, mc));
-    		}
-    		
+    	}	
+    	/*set_type to the final expression in the body*/
+    	
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -1129,6 +1175,13 @@ class let extends Expression {
     		
     	} else if(mc.subtype(a, type_decl)){
     	
+    		set_type(b);
+    		
+    	} 
+    	
+    	/*CHECK*/
+    	else if(b.equals(TreeConstants.SELF_TYPE)){
+    		
     		set_type(b);
     		
     	} else {
@@ -1423,8 +1476,9 @@ class neg extends Expression {
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
     	AbstractSymbol a = e1.type_check(o, mc);
+  
     	
-    	if(a == TreeConstants.Int){
+    	if(a.equals(TreeConstants.Int)){
     	
     		set_type(TreeConstants.Int);
     		
@@ -1487,7 +1541,7 @@ class lt extends Expression {
     	AbstractSymbol a = e1.type_check(o, mc);
     	AbstractSymbol b = e2.type_check(o, mc);
     	
-    	if ((a == TreeConstants.Int) && (b == TreeConstants.Int)) {
+    	if ((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))) {
     	
     		set_type(TreeConstants.Bool);
     		
@@ -1550,12 +1604,11 @@ class eq extends Expression {
     	AbstractSymbol a = e1.type_check(o, mc);
     	AbstractSymbol b = e2.type_check(o, mc);
     	
-    	/* If both constants are of one of the basic types and not null*/
-    	if (a == TreeConstants.Int || a == TreeConstants.Str || a == TreeConstants.Bool 
-    		&& b == TreeConstants.Int || b == TreeConstants.Str || b == TreeConstants.Bool) {
     	
-    		/*If it's the same type */
-    		if (a == b) {
+    	if ((a.equals(TreeConstants.Int) || a.equals(TreeConstants.Str) || a.equals(TreeConstants.Bool)) 
+    		&& (b.equals(TreeConstants.Int) || b.equals(TreeConstants.Str) || b.equals(TreeConstants.Bool))) {
+    	
+    		if (a.equals(b)) {
     			
     			set_type(TreeConstants.Bool);
     			
@@ -1621,7 +1674,7 @@ class leq extends Expression {
     	AbstractSymbol b = e2.type_check(o, mc);
     	
     	/* If both constants are from the basic type Int */
-    	if ((a == TreeConstants.Int)&& (b == TreeConstants.Int)) {
+    	if ((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))) {
     	
     		set_type(TreeConstants.Bool);
     		
@@ -1679,7 +1732,7 @@ class comp extends Expression {
     	
     	AbstractSymbol a = e1.type_check(o, mc);
     	
-    	if (a == TreeConstants.Bool) {
+    	if (a.equals(TreeConstants.Bool)) {
     	
     		set_type(TreeConstants.Bool);
     	
@@ -1875,7 +1928,9 @@ class new_ extends Expression {
     }
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+    	
     	set_type(type_name);
+    	
     	return get_type();
     }
     
@@ -1923,12 +1978,10 @@ class isvoid extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
-    	if(e1.type_check(o, mc) != null) {
-    		
+    	if(!(e1.type_check(o, mc) == null)) {
     		set_type(TreeConstants.Bool);
-    		
-    		}
-    		return get_type();
+    	}
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
@@ -2015,7 +2068,7 @@ class object extends Expression {
     
     public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
     	
-    	if(name == TreeConstants.self){
+    	if(name.equals(TreeConstants.self)){
     		
     		set_type(TreeConstants.SELF_TYPE);
     		 
@@ -2023,13 +2076,12 @@ class object extends Expression {
     		
     		AbstractSymbol x = (AbstractSymbol) o.lookup(name);
     		if(x == null){
-    		
     			mc.semantError(mc.getCurrClass());
     			System.out.println("Undeclared identifier "+ name.getString());
     		}
     		set_type(x);
     	}
-    		return get_type();
+    	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
