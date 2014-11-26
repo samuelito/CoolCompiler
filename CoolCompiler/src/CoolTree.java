@@ -8,6 +8,7 @@
 
 
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 
@@ -88,8 +89,10 @@ import java.util.Enumeration;
 
 
 
+import java.util.List;
 import java.io.PrintStream;
 import java.util.Vector;
+
 
 
 /** Defines simple phylum Program */
@@ -238,6 +241,7 @@ abstract class Expression extends TreeNode {
             { out.println(Utilities.pad(n) + ": _no_type"); }
     }
     public abstract void code(PrintStream s);  
+    public abstract void code(PrintStream s, CgenClassTable context);
     public abstract AbstractSymbol type_check(SymbolTable o, ClassTable mc);
 
 }
@@ -266,6 +270,13 @@ class Expressions extends ListNode {
     }
     public TreeNode copy() {
         return new Expressions(lineNumber, copyElements());
+    }
+    public List<AbstractSymbol> getTypes() {
+    	List<AbstractSymbol> res = new ArrayList<AbstractSymbol>();
+    	for (Enumeration e = this.getElements(); e.hasMoreElements();) {
+    		res.add(((Expression) e.nextElement()).get_type());
+    	}
+    	return res;
     }
 }
 
@@ -383,7 +394,13 @@ class program extends ProgramAbstract {
       * @see CgenClassTable
       * */
     public void cgen(PrintStream s) {
-	CgenClassTable codegen_classtable = new CgenClassTable(classes, s);
+//HERE!!!!!!!!!!!!!
+    	s.print("# start of generated code\n");
+    	CgenClassTable codegen_classtable = new CgenClassTable(classes, s);
+    	
+    	s.print("\n# end of generated code\n");
+//HERE!!!!!!!!!!!!
+    	
     }
 
 }
@@ -450,7 +467,13 @@ class class_ extends ClassAbstract {
     	}
     	o.exitScope();
     	}
+    
 
+   
+    
+    public void code(PrintStream s, CgenClassTable context) {
+    
+    }
 }
 
 
@@ -508,6 +531,39 @@ class method extends Feature {
     		expr.type_check(o, mc);
     	o.exitScope();
     }
+    
+    public void code(PrintStream s) {
+    /*	AbstractTable.offset = 1;
+    	AbstractTable.varTable.enterScope();
+    	for (int i = 0; i < formals.getLength(); ++i) {
+    	formal formal = (formal)formals.getNth(i);
+    	int offset = 2 + formals.getLength() - i;
+    	AbstractTable.varTable.addId(formal.getName(), new FormalVariable(-offset));
+    	}
+    	CgenSupport.emitStartMethod(s);
+    	CgenSupport.emitMove(CgenSupport.SELF, CgenSupport.ACC, s);
+    	expr.code(s);
+    	CgenSupport.emitEndMethod(formals.getLength(), s);
+    	AbstractTable.varTable.exitScope();*/
+    }
+    
+	public void code(PrintStream s, CgenClassTable context) {
+	
+	}
+    
+    public List<AbstractSymbol> getParamTypes() {
+    	List<AbstractSymbol> res = new ArrayList<AbstractSymbol>();
+    	for (Enumeration e = formals.getElements(); e.hasMoreElements();) {
+    		formal f = (formal)e.nextElement();
+    		res.add(f.getType());
+    	}
+    	return res;
+    	}
+    
+	public AbstractSymbol getName() {
+		// TODO Auto-generated method stub
+		return name;
+	}
 }
 
 
@@ -554,6 +610,11 @@ class attr extends Feature {
     		o.addId(name, type_decl);
     		init.type_check(o, mc);
     }
+    
+	public AbstractSymbol getName() {
+		// TODO Auto-generated method stub
+		return name;
+	}
 }
 
 
@@ -574,6 +635,13 @@ class formal extends FormalAbstract {
         name = a1;
         type_decl = a2;
     }
+    
+    public AbstractSymbol getName() {
+    	return name;
+    }
+    public AbstractSymbol getType() {
+    	return type_decl;
+    	}
     public TreeNode copy() {
         return new formal(lineNumber, copy_AbstractSymbol(name), copy_AbstractSymbol(type_decl));
     }
@@ -702,6 +770,19 @@ class assign extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    	
+    	
+    		
+    }
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    	expr.code(s, context);
+    
+    	//CgenSupport.emitStore(CgenSupport.ACC, offset, register, s);
+    	if(Flags.cgen_Memmgr == 1){
+    //	CgenSupport.emitAddiu(CgenSupport.A1, register, offset, s);
+    	CgenSupport.emitGCAssign(s);
+    	}
     }
 
 
@@ -789,6 +870,9 @@ class static_dispatch extends Expression {
       * */
     public void code(PrintStream s) {
     }
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 
 }
@@ -872,7 +956,9 @@ class dispatch extends Expression {
       * */
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -942,7 +1028,9 @@ class cond extends Expression {
       * */
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -1001,7 +1089,8 @@ class loop extends Expression {
     
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {   	
+    }
 
 }
 
@@ -1061,6 +1150,9 @@ class typcase extends Expression {
     public void code(PrintStream s) {
     }
 
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -1113,7 +1205,9 @@ class block extends Expression {
       * */
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -1201,6 +1295,9 @@ class let extends Expression {
       * */
     public void code(PrintStream s) {
     }
+public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 
 }
@@ -1260,6 +1357,33 @@ class plus extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s, CgenClassTable context) {
+    	 s.println("# start of plus");
+    	 
+    	 e1.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);	/*PUSH ACC*/
+    	 e2.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);  /*PUSH ACC*/
+    	 
+    	 //New Integer Copy in ACC
+    	 new_ newInt = new new_(this.getLineNumber(), TreeConstants.Int);
+    	 newInt.code(s,context);
+    	 
+    	 /* *
+    	  * 	T2 = e2 (TOP to Reg T2 and POP)
+    	  * 	T1 = e1 (TOP to Reg T1 and POP)
+    	  * 	T3 = T1+T2
+    	  * 	T3 -> ACC
+    	  * */
+    	 CgenSupport.emitPop(CgenSupport.T2, s);
+    	 CgenSupport.emitPop(CgenSupport.T1, s);
+    	 CgenSupport.emitAdd(CgenSupport.T3, CgenSupport.T1, CgenSupport.T2, s);
+    	 //Store in ACC the new Integer value. 
+    	 CgenSupport.emitStore(CgenSupport.T3, 0, CgenSupport.ACC, s);
+    	 
+    	 s.println("# end of plus");
     }
 
 
@@ -1319,6 +1443,33 @@ class sub extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s, CgenClassTable context) {
+    	 s.println("# start of sub");
+    	
+    	 e1.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);	/*PUSH ACC*/
+    	 e2.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);  /*PUSH ACC*/
+    	 
+    	 //New Integer Copy in ACC
+    	 new_ newInt = new new_(this.getLineNumber(), TreeConstants.Int);
+    	 newInt.code(s,context);
+    	 
+    	 /* *
+    	  * 	T2 = e2 (TOP to Reg T2 and POP)
+    	  * 	T1 = e1 (TOP to Reg T1 and POP)
+    	  * 	T3 = T1-T2
+    	  * 	T3 -> ACC
+    	  * */
+    	 CgenSupport.emitPop(CgenSupport.T2, s);
+    	 CgenSupport.emitPop(CgenSupport.T1, s);
+    	 CgenSupport.emitSub(CgenSupport.T3, CgenSupport.T1, CgenSupport.T2, s);
+    	 //Store in ACC the new Integer value. 
+    	 CgenSupport.emitStore(CgenSupport.T3, 0, CgenSupport.ACC, s);
+    	 
+    	 s.println("# end of sub");
     }
 
 
@@ -1378,6 +1529,31 @@ class mul extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s, CgenClassTable context) {
+    	 s.println("# start of mul");
+    	 e1.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);	/*PUSH ACC*/
+    	 e2.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);  /*PUSH ACC*/
+    	 
+    	 //New Integer Copy in ACC
+    	 new_ newInt = new new_(this.getLineNumber(), TreeConstants.Int);
+    	 newInt.code(s,context);
+    	 
+    	 /* *
+    	  * 	T2 = e2 (TOP to Reg T2 and POP)
+    	  * 	T1 = e1 (TOP to Reg T1 and POP)
+    	  * */
+    	 CgenSupport.emitPop(CgenSupport.T2, s);
+    	 CgenSupport.emitPop(CgenSupport.T1, s);
+    	 // T3 = T2 * T1
+    	 CgenSupport.emitMul(CgenSupport.T3, CgenSupport.T1, CgenSupport.T2, s);
+    	 //	Store in ACC the new Integer value.
+    	 //	T3 -> ACC
+    	 CgenSupport.emitStore(CgenSupport.T3, 0, CgenSupport.ACC, s);
+    	 s.println("# end of mul");
     }
 
 
@@ -1431,12 +1607,38 @@ class divide extends Expression {
     	}
     	return get_type();
     	}
+   
+    public void code(PrintStream s) {
+    	
+    }
     /** Generates code for this expression.  This method is to be completed 
       * in programming assignment 5.  (You may or add remove parameters as
       * you wish.)
       * @param s the output stream 
       * */
-    public void code(PrintStream s) {
+    public void code(PrintStream s, CgenClassTable context) {
+    	s.println("# start of div");
+    	 e1.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);	/*PUSH ACC -> Top = e1 */
+    	 e2.code(s,context);
+    	 CgenSupport.emitPush(CgenSupport.ACC, s);  /*PUSH ACC -> Top = e2 */
+    	 
+    	 //New Integer Copy in ACC
+    	 new_ newInt = new new_(this.getLineNumber(), TreeConstants.Int);
+    	 newInt.code(s,context);
+    	 
+    	 /* *
+    	  * 	T2 = e2 (TOP to Reg T2 and POP)
+    	  * 	T1 = e1 (TOP to Reg T1 and POP)
+    	  * */
+    	 CgenSupport.emitPop(CgenSupport.T2, s);
+    	 CgenSupport.emitPop(CgenSupport.T1, s);
+    	 // T3 = T1 / T2
+    	 CgenSupport.emitDiv(CgenSupport.T3, CgenSupport.T1, CgenSupport.T2, s);
+    	 //	Store in ACC the new Integer value.
+    	 //	T3 -> ACC
+    	 CgenSupport.emitStore(CgenSupport.T3, 0, CgenSupport.ACC, s);
+    	s.println("# end of div");
     }
 
 
@@ -1496,6 +1698,10 @@ class neg extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    }
+
+    public void code(PrintStream s, CgenClassTable context) {
+    	
     }
 
 
@@ -1559,7 +1765,9 @@ class lt extends Expression {
       * */
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -1629,7 +1837,9 @@ class eq extends Expression {
       * */
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -1693,6 +1903,9 @@ class leq extends Expression {
       * */
     public void code(PrintStream s) {
     }
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 
 }
@@ -1751,6 +1964,9 @@ class comp extends Expression {
       * */
     public void code(PrintStream s) {
     }
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 
 }
@@ -1794,7 +2010,11 @@ class int_const extends Expression {
       * to you as an example of code generation.
       * @param s the output stream 
       * */
+    
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s,CgenClassTable context) {
 	CgenSupport.emitLoadInt(CgenSupport.ACC,
                                 (IntSymbol)AbstractTable.inttable.lookup(token.getString()), s);
     }
@@ -1841,7 +2061,11 @@ class bool_const extends Expression {
       * to you as an example of code generation.
       * @param s the output stream 
       * */
+    
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s, CgenClassTable context) {
 	CgenSupport.emitLoadBool(CgenSupport.ACC, new BoolConst(val), s);
     }
 
@@ -1890,8 +2114,12 @@ class string_const extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s, CgenClassTable context) {
 	CgenSupport.emitLoadString(CgenSupport.ACC,
                                    (StringSymbol)AbstractTable.stringtable.lookup(token.getString()), s);
+	
     }
 
 }
@@ -1940,6 +2168,48 @@ class new_ extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    	
+    }
+    public void code(PrintStream s, CgenClassTable context) {
+    	s.println("# start of 'new " + type_name + "'");
+    	if (type_name.equals(TreeConstants.SELF_TYPE)) {
+    		
+    	//Address to T1
+    		CgenSupport.emitLoadAddress(CgenSupport.T1, CgenSupport.CLASSOBJTAB, s);
+    	//Load SELF to T2 (TAG_OFFSET? or 0?)
+    		CgenSupport.emitLoad(CgenSupport.T2, 0, CgenSupport.SELF, s);
+    	//Shift 3 in T2 -> Mult by 8
+    		CgenSupport.emitSll(CgenSupport.T2, CgenSupport.T2, 3, s);
+    	//Offset in T2 to the address T1
+    		CgenSupport.emitAddu(CgenSupport.T1, CgenSupport.T1, CgenSupport.T2, s);
+    	//Address to ACC 
+    		CgenSupport.emitLoad(CgenSupport.ACC, 0, CgenSupport.T1, s);
+    	//Push Address to Stack 
+    		CgenSupport.emitPush(CgenSupport.T1, s);
+    	//Run Object.copy
+    		CgenSupport.emitJal("Object.copy", s);
+    	//Pop the Address
+    	/*CgenSupport.emitPop(CgenSupport.T1, s);*/
+    		
+    	//Top (Address) to T1 (in case Object.copy modified T1)	
+    		CgenSupport.emitTop(CgenSupport.T1, s);
+    	//Add 4 to get the init address
+    		CgenSupport.emitAddiu(CgenSupport.T1, CgenSupport.T1, 4, s);
+    		//CgenSupport.emitLoad(CgenSupport.T1, 1, CgenSupport.T1, s);
+    	
+    	//Call the init method
+    		CgenSupport.emitJalr(CgenSupport.T1, s);
+    	//Pop the Address
+        	CgenSupport.emitPop(s);
+        	
+    	} else {
+    	
+    		CgenSupport.emitLoadAddress(CgenSupport.ACC, type_name.toString() + CgenSupport.PROTOBJ_SUFFIX, s);
+    		CgenSupport.emitJal("Object.copy", s);
+    		CgenSupport.emitJal(type_name.toString() + CgenSupport.CLASSINIT_SUFFIX, s);
+    	}
+    	s.println("# end of 'new " + type_name + "'");
+    	
     }
 
 
@@ -1990,7 +2260,9 @@ class isvoid extends Expression {
       * */
     public void code(PrintStream s) {
     }
-
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 }
 
@@ -2030,6 +2302,9 @@ class no_expr extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s) {
+    }
+    public void code(PrintStream s, CgenClassTable context) {
+    	
     }
 
 
@@ -2090,8 +2365,80 @@ class object extends Expression {
       * */
     public void code(PrintStream s) {
     }
+    public void code(PrintStream s, CgenClassTable context) {
+    	
+    }
 
 
 }
 
+/*
+abstract class Variable {
+	public abstract void emitRef(PrintStream s);
+	public abstract void emitAssign(PrintStream s);
+}
 
+class AttrVariable extends Variable {
+	private int offset;
+	
+	public AttrVariable(int offset) {
+		this.offset = offset + CgenSupport.DEFAULT_OBJFIELDS;
+	}
+
+	public void emitRef(PrintStream s) {
+		CgenSupport.emitLoad(CgenSupport.ACC, offset, CgenSupport.SELF, s);
+	}
+
+	public void emitAssign(PrintStream s) {
+		CgenSupport.emitStore(CgenSupport.ACC, offset, CgenSupport.SELF, s);
+	}
+}
+
+class FormalVariable extends Variable {
+	private int offset;
+	public FormalVariable(int offset) {
+		this.offset = offset;
+	}
+
+	public void emitRef(PrintStream s) {
+		CgenSupport.emitLoad(CgenSupport.ACC, -offset, CgenSupport.FP, s);
+	}
+
+	public void emitAssign(PrintStream s) {
+		CgenSupport.emitStore(CgenSupport.ACC, -offset, CgenSupport.FP, s);
+	}
+}
+
+class LetVariable extends Variable {
+	private int offset;
+
+	public LetVariable(int offset) {
+		this.offset = offset;
+	}
+
+	public void emitRef(PrintStream s) {
+		CgenSupport.emitLoad(CgenSupport.ACC, -offset, CgenSupport.FP, s);
+	}
+
+	public void emitAssign(PrintStream s) {
+		CgenSupport.emitStore(CgenSupport.ACC, -offset, CgenSupport.FP, s);
+	}
+}
+
+class BranchVariable extends Variable {
+	private int offset;
+	
+	public BranchVariable(int offset) {
+		this.offset = offset;
+	}
+
+	public void emitRef(PrintStream s) {
+		CgenSupport.emitLoad(CgenSupport.ACC, -offset, CgenSupport.FP, s);
+	}
+
+	public void emitAssign(PrintStream s) {
+		CgenSupport.emitStore(CgenSupport.ACC, -offset, CgenSupport.FP, s);
+	}
+}
+
+*/

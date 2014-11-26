@@ -22,8 +22,14 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // This is a project skeleton file
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 import java.util.Enumeration;
+
 
 class CgenNode extends class_ {
     /** The parent of this node in the inheritance tree */
@@ -40,7 +46,9 @@ class CgenNode extends class_ {
     
     /** Does this node correspond to a basic class? */
     private int basic_status;
-
+    
+  
+   
     /** Constructs a new CgenNode to represent class "c".
      * @param c the class
      * @param basic_status is this class basic or not
@@ -51,6 +59,7 @@ class CgenNode extends class_ {
 	this.parent = null;
 	this.children = new Vector();
 	this.basic_status = basic_status;
+	
 	AbstractTable.stringtable.addString(name.getString());
     }
 
@@ -92,7 +101,8 @@ class CgenNode extends class_ {
     boolean basic() { 
 	return basic_status == Basic; 
     }
+    
 }
-    
 
-    
+
+

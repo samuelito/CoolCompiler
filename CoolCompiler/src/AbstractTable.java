@@ -80,7 +80,8 @@ import java.util.Enumeration;
     @see IdSymbol
     @see IntSymbol */
 abstract class AbstractTable {
-    /** Global string table of string constants */
+    
+	/** Global string table of string constants */
     public static StringTable stringtable = new StringTable();
 
     /** Global string table of identifiers */
@@ -91,6 +92,7 @@ abstract class AbstractTable {
 
     private static int MAXSIZE = 1000000;
 
+	
     /** Vector of table entries */
     protected Vector tbl = new Vector();
 

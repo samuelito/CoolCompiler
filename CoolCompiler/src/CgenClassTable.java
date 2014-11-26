@@ -21,7 +21,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // This is a project skeleton file
 
+
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Vector;
 import java.util.Enumeration;
 
@@ -39,7 +44,8 @@ class CgenClassTable extends SymbolTable {
     private int stringclasstag;
     private int intclasstag;
     private int boolclasstag;
-
+    
+  
 
     // The following methods emit code for constants and global
     // declarations.
@@ -369,17 +375,19 @@ class CgenClassTable extends SymbolTable {
 	CgenNode parent = (CgenNode)probe(nd.getParent());
 	nd.setParentNd(parent);
 	parent.addChild(nd);
-    }
-
+    } 	
+    	
     /** Constructs a new class table and invokes the code generator */
     public CgenClassTable(Classes cls, PrintStream str) {
-	nds = new Vector();
+    	
+
+    nds = new Vector();
 
 	this.str = str;
 
-	stringclasstag = 0 /* Change to your String class tag here */;
-	intclasstag =    0 /* Change to your Int class tag here */;
-	boolclasstag =   0 /* Change to your Bool class tag here */;
+	stringclasstag = 4 /* Change to your String class tag here */;
+	intclasstag =    2 /* Change to your Int class tag here */;
+	boolclasstag =   3 /* Change to your Bool class tag here */;
 
 	enterScope();
 	if (Flags.cgen_debug) System.out.println("Building CgenClassTable");
@@ -409,6 +417,11 @@ class CgenClassTable extends SymbolTable {
 	//                   - prototype objects
 	//                   - class_nameTab
 	//                   - dispatch tables
+	
+	codeNameTable();
+	codeObjTable();
+	codeDispatchTables();
+	codeProtoObjects();
 
 	if (Flags.cgen_debug) System.out.println("coding global text");
 	codeGlobalText();
@@ -417,12 +430,58 @@ class CgenClassTable extends SymbolTable {
 	//                   - object initializer
 	//                   - the class methods
 	//                   - etc...
+	
+	codeClasses();
     }
 
     /** Gets the root of the inheritance tree */
     public CgenNode root() {
 	return (CgenNode)probe(TreeConstants.Object_);
     }
-}
-			  
+
+//FIX!!!!!
+//UNFINISHED
+  
+    private void codeNameTable() {
+    	str.print(CgenSupport.CLASSNAMETAB + CgenSupport.LABEL);
+    	for (Enumeration e = nds.elements(); e.hasMoreElements();) {
+    		CgenNode node = (CgenNode)e.nextElement();
+    		str.println(CgenSupport.WORD + CgenSupport.getStringRef(node.getName().toString()));
+    	}
+    }
+    
+    private void codeObjTable() {
+    	str.print(CgenSupport.CLASSOBJTAB + CgenSupport.LABEL);
+    	for (Enumeration e = nds.elements(); e.hasMoreElements();) {
+    		CgenNode node = (CgenNode)e.nextElement();
+    		str.println(CgenSupport.WORD + node.getName() + CgenSupport.PROTOBJ_SUFFIX);
+    		str.println(CgenSupport.WORD + node.getName() + CgenSupport.CLASSINIT_SUFFIX);
+    	}
+    }
+    	
+    private void codeDispatchTables() {
+    	for (Enumeration e = nds.elements(); e.hasMoreElements();) {
+    		CgenNode node = (CgenNode)e.nextElement();
+    		
+  //  		DO SOMETHING:
+  //		node.codeDispatchTable(str);
+    	}
+    }
+    
+    private void codeProtoObjects() {
+    	for (Enumeration e = nds.elements(); e.hasMoreElements();) {
+    		CgenNode node = (CgenNode)e.nextElement();
+ //			DO SOMETHING:
+ //   		node.codeProtoObject(str);
+    	}
+    }
+    
+    private void codeClasses() {
+    	for (Enumeration e = nds.elements(); e.hasMoreElements();) {
+    		CgenNode node = (CgenNode)e.nextElement();
+  //		DO SOMETHING:
+  //   		node.code(str);
+    	}
+    }
+}  		  
     

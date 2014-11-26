@@ -22,6 +22,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // This is a project skeleton file
 
 import java.io.PrintStream;
+import java.util.Enumeration;
 
 /** This class aggregates all kinds of support routines and constants
     for the code generator; all routines are statics, so no instance of
@@ -117,6 +118,10 @@ class CgenSupport {
     final static String BLT     = "\tblt\t";
     final static String BGT     = "\tbgt\t";
 
+
+    public static AbstractSymbol currentFilename;
+    public static CgenNode currentClass;
+    private static int labelNum = 0;
     /** Emits an LW instruction.
      * @param dest_reg the destination register
      * @param offset the word offset from source register
@@ -481,6 +486,21 @@ class CgenSupport {
 	emitStore(reg, 0, SP, s);
 	emitAddiu(SP, SP, -4, s);
     }
+    
+/*VERIFY!!!*/
+    
+    static void emitPop(String reg, PrintStream s) {
+    emitPop(s);
+    emitLoad(reg, 0, SP, s);
+    }
+    
+    static void emitPop(PrintStream s) {
+    emitAddiu(SP, SP, 4, s);
+    }
+   
+    static void emitTop(String reg, PrintStream s){
+    emitLoad(reg, 4, SP, s);
+    }
 
     /** Emits code to fetch the integer value of the Integer object.
      * @param source a pointer to the Integer object
@@ -582,7 +602,18 @@ class CgenSupport {
 	byteMode(s);
 	s.println("\t.byte\t0\t");
     }
+    
+    static String getStringRef(String s) {
+    	StringSymbol sym = (StringSymbol)AbstractTable.stringtable.lookup(s);
+    	return STRCONST_PREFIX + sym.index;
+   
+    }
+    static String getStringRef(AbstractSymbol s) {
+    	return getStringRef(s.toString());
+    }
+    
 }
+
     
     
     
