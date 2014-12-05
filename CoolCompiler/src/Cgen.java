@@ -38,7 +38,7 @@ class Cgen {
 		FileReader file =new FileReader(args[0]);
 	   // ASTLexer lexer = new ASTLexer(new InputStreamReader(System.in));
 	  //ASTParser parser = new ASTParser(lexer);
-		   
+		
 	    CoolLexer lexer = new CoolLexer(file);
 	    lexer.set_filename(args[0]);
 	    CoolCup parser = new CoolCup(lexer);

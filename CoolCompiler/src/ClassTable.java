@@ -392,6 +392,7 @@ class ClassTable {
     	if(a.equals(b)){
     		return true;
     	} 
+    	
     	else if (!(a.equals(TreeConstants.Object_))){
     		return subtype(parent(a), b);
     	}
