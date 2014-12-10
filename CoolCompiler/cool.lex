@@ -93,6 +93,7 @@ import java_cup.runtime.Symbol;
 	RPAR = ")"
 	LB = "{"
 	RB = "}"
+	PLUSONE = "++"
 	
 	NEWLINE = [\n]
 	BLANKCHAR = (" "|\t|\r|\f|\v)
@@ -331,6 +332,7 @@ import java_cup.runtime.Symbol;
 {PERIOD} 		{ return new Symbol(TokenConstants.DOT);}
 {NEG} 	 		{ return new Symbol(TokenConstants.NEG);}
 {LESS} 	 		{ return new Symbol(TokenConstants.LE);}
+{PLUSONE}		{ return new Symbol(TokenConstants.PO);}
 
 .               { /* This rule should be the very last
                      in your lexical specification and

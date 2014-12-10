@@ -58,6 +58,7 @@ terminal LPAREN, RPAREN, AT, LBRACE, RBRACE;
 terminal AbstractSymbol STR_CONST, INT_CONST;
 terminal Boolean BOOL_CONST;
 terminal AbstractSymbol TYPEID, OBJECTID;
+terminal PO;
 
 /*  DON'T CHANGE ANYTHING ABOVE THIS LINE, OR YOUR PARSER WON'T WORK       */
 /**************************************************************************/
@@ -87,7 +88,7 @@ precedence left OBJECTID;
 precedence right ASSIGN;
 precedence left NOT;
 precedence nonassoc LE, LT, EQ;
-precedence left PLUS, MINUS;
+precedence left PO, PLUS, MINUS;
 precedence left MULT, DIV;
 precedence left ISVOID;
 precedence left NEG;
@@ -293,6 +294,8 @@ expr
 		{: RESULT = new string_const(curr_lineno(), s); :}
 	| BOOL_CONST:b
 		{: RESULT = new bool_const(curr_lineno(), b); :}
+	| OBJECTID:e1 PO
+		{: RESULT =	 new plus_one(curr_lineno(), e1); :}
 	;
 
 	
