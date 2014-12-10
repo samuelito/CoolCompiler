@@ -1882,7 +1882,7 @@ class plus extends Expression {
         CgenSupport.emitStore("$s1", 3, CgenSupport.ACC, s);
         CgenSupport.emitAddiu(CgenSupport.SP, CgenSupport.SP, 4, s);            // pop
 
-        
+        //dasjhdajkdas
 
     }
    /* public void code(PrintStream s, CgenClassTable context) {
