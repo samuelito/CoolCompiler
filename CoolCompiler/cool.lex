@@ -99,6 +99,9 @@ import java_cup.runtime.Symbol;
 	BLANKCHAR = (" "|\t|\r|\f|\v)
 	WHITESPACE = {BLANKCHAR}+
 	
+	
+	AND = ([aA][nN][dD])
+	OR = ([oO][rR])
 	TRUE = ("t"[rR][uU][eE])
 	FALSE = ("f"[aA][lL][sS][eE])
 	CLASS = ([cC][lL][aA][sS][sS]) 
@@ -118,6 +121,7 @@ import java_cup.runtime.Symbol;
 	INH = ([iI][nN][hH][eE][rR][iI][tT][sS])
 	THEN = ([tT][hH][eE][nN])
 	WHILE = ([wW][hH][iI][lL][eE])
+	
 	
 	DIGIT = [0-9]
 	INT = {DIGIT}+	
@@ -302,6 +306,9 @@ import java_cup.runtime.Symbol;
 {INH} 			{ return new Symbol(TokenConstants.INHERITS);}						  
 {THEN} 			{ return new Symbol(TokenConstants.THEN);}						 
 {WHILE} 		{ return new Symbol(TokenConstants.WHILE);}
+{AND}			{ return new Symbol(TokenConstants.AND);}
+{OR}			{ return new Symbol(TokenConstants.OR);}
+
 						  
 {TID} 			{   AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
 		  			Symbol ret = new Symbol(TokenConstants.TYPEID);

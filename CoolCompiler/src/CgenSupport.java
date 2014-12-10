@@ -117,6 +117,8 @@ class CgenSupport {
     final static String BLEQ    = "\tble\t";
     final static String BLT     = "\tblt\t";
     final static String BGT     = "\tbgt\t";
+    final static String AND		= "\tand\t";
+    final static String OR		= "\tor\t";
 
 
     public static AbstractSymbol currentFilename;
@@ -291,6 +293,31 @@ class CgenSupport {
 			PrintStream s) {
 	s.println(SUB + dest_reg + " " + src1 + " " + src2);
     }
+    
+   
+    /** Emits a AND instruction.
+     * @param dest_reg the destination register
+     * @param src1 the source register 1
+     * @param src2 the source register 2
+     * @param s the output stream
+     * */
+    static void emitAnd(String dest_reg, String src1, String src2,
+			PrintStream s) {
+	s.println(AND + dest_reg + " " + src1 + " " + src2);
+    }
+   
+    /** Emits a OR instruction.
+     * @param dest_reg the destination register
+     * @param src1 the source register 1
+     * @param src2 the source register 2
+     * @param s the output stream
+     * */
+    
+    static void emitOr(String dest_reg, String src1, String src2,
+			PrintStream s) {
+	s.println(OR + dest_reg + " " + src1 + " " + src2);
+    }
+    
 
     /** Emits an SLL instruction.
      * @param dest_reg the destination register
@@ -611,6 +638,8 @@ class CgenSupport {
     static String getStringRef(AbstractSymbol s) {
     	return getStringRef(s.toString());
     }
+    
+    
     
 }
 
