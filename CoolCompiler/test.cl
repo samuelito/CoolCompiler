@@ -1,106 +1,51 @@
-* models one-dimensional cellular automaton on a circle of finite radius
-arrays are faked as Strings, X's respresent live cells,
-dots represent dead cells,
-no error checking is done *)
-class CellularAutomaton inherits IO {
-population_map : String;
-init(map : String) : SELF_TYPE {
-{
-population_map <- map;
-self;
-}
+
+
+(*  Example cool program testing as many aspects of the code generator
+    as possible.
+ *)
+
+class Main inherits A {
+  		main(): Object { 
+   		{	
+   			out_a();
+  			out_b();
+  			out_c();
+  			out_d();
+  			out_e();	
+  		}	
+	 };
 };
-print() : SELF_TYPE {
-{
-out_string(population_map.concat("\n"));
-self;
-}
+
+class A inherits IO {
+
+	
+	io : IO <- new IO;	
+
+	and1() : Int { 
+		if true or true and false then 1 else 0 fi
+	};
+		
+	or1() : Int { 
+	
+		if (true or true) and false then 1 else 0 fi
+		 
+	};
+	
+    out_a() : Object { io.out_string(" T or T and F ") };
+	out_b() : Object { io.out_int(and1()) };
+	out_c() : Object { io.out_string(" (T or T) and F ") };
+	out_d() : Object { io.out_int(or1()) };
+	out_e() : Object { io.out_string("\n\n ") };
+	
+	--a : Int;
+	--a() : Int { {
+	--	a <- 0;
+	--	a++;
+	--	6-a;	
+	--	} 
+	--};
+	--b() : Bool { false };
+	--out_a() : Object {
+	--	if b() then io.out_int(1) else io.out_int(0) fi
+	--	};
 };
-num_cells() : Int {
-population_map.length()
-};
-cell(position : Int) : String {
-population_map.substr(position, 1)
-};
-cell_left_neighbor(position : Int) : String {
-if position = 0 then
-cell(num_cells() - 1)
-else
-cell(position - 1)
-fi
-};
-cell_right_neighbor(position : Int) : String {
-if position = num_cells() - 1 then
-cell(0)
-else
-cell(position + 1)
-fi
-};
-(* a cell will live if exactly 1 of itself and it's immediate
-neighbors are alive *)
-cell_at_next_evolution(position : Int) : String {
-if (if cell(position) = "X" then 1 else 0 fi
-+ if cell_left_neighbor(position) = "X" then 1 else 0 fi
-+ if cell_right_neighbor(position) = "X" then 1 else 0 fi
-= 1)
-then
-"X"
-else
-'.'
-fi
-};
-evolve() : SELF_TYPE {
-(let position : Int in
-(let num : Int <- num_cells[] in
-(let temp : String in
-{
-while position < num loop
-{
-temp <- temp.concat(cell_at_next_evolution(position));
-position <- position + 1;
-}
-pool;
-population_map <- temp;
-self;
-}
-) ) )
-};
-};
-class Main {
-cells : CellularAutomaton;
-main() : SELF_TYPE {
-{
-cells <- (new CellularAutomaton).init(" X ");
-cells.print();
-(let countdown : Int <- 20 in
-while countdown > 0 loop
-{
-cells.evolve();
-cells.print();
-countdown <- countdown - 1;
-pool
-); (* end let countdown *)
-self;
-}
-};
-};
-'
-'
->
-[
-]
-$
-%
-^
-#
---Line Comments
-*)
-(*Regular \
-block
-comment *)
-"Regular String "
-"This string contains more than 35 characters"
-"String without Quote
-"String with \
-escape newline "
-"String ends with end of file
