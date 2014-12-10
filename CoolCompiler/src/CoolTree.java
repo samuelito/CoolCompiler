@@ -1761,7 +1761,7 @@ class plus extends Expression {
     	if((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))){
     		set_type(TreeConstants.Int);
     	} 
-    	else {
+    	else {  
     		set_type(TreeConstants.Int);
     		//mc.semantError(mc.getCurrClass());
     		System.out.println("non-Int arguments");
