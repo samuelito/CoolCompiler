@@ -117,6 +117,8 @@ import java_cup.runtime.Symbol;
 	INH = ([iI][nN][hH][eE][rR][iI][tT][sS])
 	THEN = ([tT][hH][eE][nN])
 	WHILE = ([wW][hH][iI][lL][eE])
+	AND = ([aA][nN][dD])
+	OR =([oO][rR])
 	
 	DIGIT = [0-9]
 	INT = {DIGIT}+	
@@ -301,6 +303,8 @@ import java_cup.runtime.Symbol;
 {INH} 			{ return new Symbol(TokenConstants.INHERITS);}						  
 {THEN} 			{ return new Symbol(TokenConstants.THEN);}						 
 {WHILE} 		{ return new Symbol(TokenConstants.WHILE);}
+{AND} 	 		{ return new Symbol(TokenConstants.AND);}
+{OR} 	 		{ return new Symbol(TokenConstants.OR);}
 						  
 {TID} 			{   AbstractSymbol lex_val = AbstractTable.idtable.addString(yytext());
 		  			Symbol ret = new Symbol(TokenConstants.TYPEID);

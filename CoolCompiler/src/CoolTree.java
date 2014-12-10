@@ -1761,11 +1761,11 @@ class plus extends Expression {
     	if((a.equals(TreeConstants.Int)) && (b.equals(TreeConstants.Int))){
     		set_type(TreeConstants.Int);
     	} 
-    	else {  
+    	else {
     		set_type(TreeConstants.Int);
     		//mc.semantError(mc.getCurrClass());
     		System.out.println("non-Int arguments");
-    	}   
+    	}
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
@@ -2382,8 +2382,8 @@ class eq extends Expression {
       * @param s the output stream 
       * */
     public void code(PrintStream s, SymbolTable symbolTable, int letCount) {
-        int trueBranchInt = class_.getLabelCounter();
-        int falseBranchInt  = class_.getLabelCounter();
+        
+    	int trueBranchInt = class_.getLabelCounter();
         int endInt = class_.getLabelCounter();
 
         e2.code(s, symbolTable, letCount);//cgen(e2)
@@ -2517,6 +2517,169 @@ class leq extends Expression {
         CgenSupport.emitLabelDef(endInt, s);
         CgenSupport.emitAddiu(CgenSupport.SP, CgenSupport.SP, 8, s);            // pop
     }
+
+
+}
+
+/** Defines AST constructor 'and'.
+<p>
+See <a href="TreeNode.html">TreeNode</a> for full documentation. */
+class and extends Expression {
+protected Expression e1;
+protected Expression e2;
+/** Creates "and" AST node. 
+  *
+  * @param lineNumber the line in the source file from which this node came.
+  * @param a0 initial value for e1
+  * @param a1 initial value for e2
+  */
+public and(int lineNumber, Expression a1, Expression a2) {
+    super(lineNumber);
+    e1 = a1;
+    e2 = a2;
+}
+public TreeNode copy() {
+    return new and(lineNumber, (Expression)e1.copy(), (Expression)e2.copy());
+}
+public void dump(PrintStream out, int n) {
+    out.print(Utilities.pad(n) + "and\n");
+    e1.dump(out, n+2);
+    e2.dump(out, n+2);
+}
+
+
+public void dump_with_types(PrintStream out, int n) {
+    dump_line(out, n);
+    out.println(Utilities.pad(n) + "_and");
+e1.dump_with_types(out, n + 2);
+e2.dump_with_types(out, n + 2);
+dump_type(out, n);
+}
+
+public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+	AbstractSymbol a = e1.type_check(o, mc);
+	AbstractSymbol b = e2.type_check(o, mc);
+	
+	/* If both constants are from the basic type Int */
+	if ((a.equals(TreeConstants.Bool)) && (b.equals(TreeConstants.Bool))) {
+	
+		set_type(TreeConstants.Bool);
+		
+	} else {
+		
+		set_type(TreeConstants.Bool);
+		//mc.semantError(mc.getCurrClass());
+		System.out.println("non-Bool arguments: "+ a.getString() + " and "+ b.getString());
+	
+	}
+	return get_type();
+}
+/** Generates code for this expression.  This method is to be completed 
+  * in programming assignment 5.  (You may or add remove parameters as
+  * you wish.)
+  * @param s the output stream 
+  * */
+public void code(PrintStream s, SymbolTable symbolTable, int letCount) {
+	
+	int trueBranchInt = class_.getLabelCounter();
+    e1.code(s, symbolTable, letCount);//cgen(e1)
+    CgenSupport.emitPush(CgenSupport.ACC,s);// push $a0
+    e2.code(s, symbolTable, letCount);//cgen(e2)
+    CgenSupport.emitLoad("$s1", 3,CgenSupport.ACC,s);
+    CgenSupport.emitLoad("$s2", 1,CgenSupport.SP,s);
+    CgenSupport.emitLoad("$s2", 3, "$s2",s);
+    CgenSupport.emitJal("Object.copy",s);  
+    CgenSupport.emitAnd("$s3", "$s2", "$s1", s);  
+    CgenSupport.emitBeqz("$s3", trueBranchInt, s);
+    CgenSupport.emitLoadBool(CgenSupport.ACC,BoolConst.truebool,s);
+    CgenSupport.emitBranch(trueBranchInt, s);
+    int endInt = class_.getLabelCounter();
+    CgenSupport.emitLoadBool(CgenSupport.ACC,BoolConst.falsebool,s);
+    CgenSupport.emitAddiu(CgenSupport.SP, CgenSupport.SP, 4, s); 
+}
+
+
+}
+
+
+/** Defines AST constructor 'or'.
+<p>
+See <a href="TreeNode.html">TreeNode</a> for full documentation. */
+class or extends Expression {
+protected Expression e1;
+protected Expression e2;
+/** Creates "or" AST node. 
+  *
+  * @param lineNumber the line in the source file from which this node came.
+  * @param a0 initial value for e1
+  * @param a1 initial value for e2
+  */
+public or(int lineNumber, Expression a1, Expression a2) {
+    super(lineNumber);
+    e1 = a1;
+    e2 = a2;
+}
+public TreeNode copy() {
+    return new or(lineNumber, (Expression)e1.copy(), (Expression)e2.copy());
+}
+public void dump(PrintStream out, int n) {
+    out.print(Utilities.pad(n) + "or\n");
+    e1.dump(out, n+2);
+    e2.dump(out, n+2);
+}
+
+
+public void dump_with_types(PrintStream out, int n) {
+    dump_line(out, n);
+    out.println(Utilities.pad(n) + "_or");
+e1.dump_with_types(out, n + 2);
+e2.dump_with_types(out, n + 2);
+dump_type(out, n);
+}
+
+public AbstractSymbol type_check(SymbolTable o, ClassTable mc) {
+	AbstractSymbol a = e1.type_check(o, mc);
+	AbstractSymbol b = e2.type_check(o, mc);
+	
+	/* If both constants are from the basic type Int */
+	if ((a.equals(TreeConstants.Bool)) && (b.equals(TreeConstants.Bool))) {
+	
+		set_type(TreeConstants.Bool);
+		
+	} else {
+		
+		set_type(TreeConstants.Bool);
+		//mc.semantError(mc.getCurrClass());
+		System.out.println("non-Bool arguments: "+ a.getString() + " or "+ b.getString());
+	
+	}
+	return get_type();
+}
+/** Generates code for this expression.  This method is to be completed 
+  * in programming assignment 5.  (You may or add remove parameters as
+  * you wish.)
+  * @param s the output stream 
+  * */
+public void code(PrintStream s, SymbolTable symbolTable, int letCount) {
+	int trueBranchInt = class_.getLabelCounter();
+
+
+
+    e1.code(s, symbolTable, letCount);//cgen(e1)
+    CgenSupport.emitPush(CgenSupport.ACC,s);// push $a0
+    e2.code(s, symbolTable, letCount);//cgen(e2)
+    CgenSupport.emitLoad("$s1", 3,CgenSupport.ACC,s);
+    CgenSupport.emitLoad("$s2", 1,CgenSupport.SP,s);
+    CgenSupport.emitLoad("$s2", 3, "$s2",s);
+    CgenSupport.emitJal("Object.copy",s);  
+    CgenSupport.emitAnd("$s3", "$s2", "$s1", s);  
+    CgenSupport.emitBeqz("$s3", trueBranchInt, s);
+    CgenSupport.emitLoadBool(CgenSupport.ACC,BoolConst.truebool,s);
+    CgenSupport.emitBranch(trueBranchInt, s);
+    int endInt = class_.getLabelCounter();
+    CgenSupport.emitLoadBool(CgenSupport.ACC,BoolConst.falsebool,s);
+    CgenSupport.emitAddiu(CgenSupport.SP, CgenSupport.SP, 4, s); 
+     }
 
 
 }
@@ -3081,4 +3244,3 @@ class object extends Expression {
 
 
 }
-

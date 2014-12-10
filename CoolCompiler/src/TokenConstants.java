@@ -52,5 +52,7 @@ public class TokenConstants {
   public static final int INT_CONST = 41;
   public static final int NEG = 31;
   public static final int LE = 22;
+  public static final int AND = 45;
+  public static final int OR = 46;
 }
 

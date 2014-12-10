@@ -126,6 +126,8 @@ class Utilities {
 	case TokenConstants.LBRACE:     return("'{'");
 	case TokenConstants.RBRACE:     return("'}'");
 	case TokenConstants.EOF:        return("EOF");
+	case TokenConstants.AND:     	return("AND");
+	case TokenConstants.OR: 		return ("OR");
 	default:                        return("<Invalid Token: " + s.sym + ">");
 	}
     }
@@ -238,4 +240,3 @@ class Utilities {
 
 	    
 	
-

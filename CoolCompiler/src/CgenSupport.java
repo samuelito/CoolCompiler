@@ -115,6 +115,8 @@ class CgenSupport {
     final static String BEQ     = "\tbeq\t";
     final static String BNE     = "\tbne\t";
     final static String BLEQ    = "\tble\t";
+    final static String AND    = "\tand\t";
+    final static String OR    = "\tor\t";
     final static String BLT     = "\tblt\t";
     final static String BGT     = "\tbgt\t";
 
@@ -431,6 +433,28 @@ class CgenSupport {
 	s.println("");
     }
     
+    /** Emits a AND instruction.
+     * @param src1 the source register 1
+     * @param src2 the source register 2
+     * @param label the label number
+     * @param s the output stream
+     * */
+    static void emitAnd(String src1, String src2, String dest, PrintStream s) {
+	s.print(AND + dest + " " + src1 + " "+ src2);
+	s.println("");
+    }
+    
+    /** Emits a OR instruction.
+     * @param src1 the source register 1
+     * @param src2 the source register 2
+     * @param label the label number
+     * @param s the output stream
+     * */
+    static void emitOr(String dest, String src1, String src2, PrintStream s) {
+    	s.print(OR + dest + " " + src1 + " "+ src2);
+    	s.println("");
+    }
+    
     /** Emits a BLT instruction.
      * @param src1 the source register 1
      * @param src2 the source register 2
@@ -617,4 +641,3 @@ class CgenSupport {
     
     
     
-

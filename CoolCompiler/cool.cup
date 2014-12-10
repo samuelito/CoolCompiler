@@ -58,6 +58,7 @@ terminal LPAREN, RPAREN, AT, LBRACE, RBRACE;
 terminal AbstractSymbol STR_CONST, INT_CONST;
 terminal Boolean BOOL_CONST;
 terminal AbstractSymbol TYPEID, OBJECTID;
+terminal AND, OR;
 
 /*  DON'T CHANGE ANYTHING ABOVE THIS LINE, OR YOUR PARSER WON'T WORK       */
 /**************************************************************************/
@@ -85,6 +86,7 @@ nonterminal let letstatement;
 /* Precedence declarations go here. */
 precedence left OBJECTID;
 precedence right ASSIGN;
+precedence left AND, OR;
 precedence left NOT;
 precedence nonassoc LE, LT, EQ;
 precedence left PLUS, MINUS;
@@ -293,6 +295,10 @@ expr
 		{: RESULT = new string_const(curr_lineno(), s); :}
 	| BOOL_CONST:b
 		{: RESULT = new bool_const(curr_lineno(), b); :}
+	| expr:e1 AND expr:e2
+		{: RESULT = new and(curr_lineno(), e1, e2); :}
+	| expr:e1 OR expr:e2
+		{: RESULT = new or(curr_lineno(), e1, e2); :}	
 	;
 
 	
