@@ -1765,7 +1765,7 @@ class plus extends Expression {
     		set_type(TreeConstants.Int);
     		//mc.semantError(mc.getCurrClass());
     		System.out.println("non-Int arguments");
-    	}
+    	}   
     	return get_type();
     }
     /** Generates code for this expression.  This method is to be completed 
